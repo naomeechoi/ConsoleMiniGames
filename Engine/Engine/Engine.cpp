@@ -1,19 +1,37 @@
 #include "Engine.h"
 #include "Level/Level.h"
+#include "Core/Input.h"
 
 #include <iostream>
 #include <Windows.h>
 
 namespace Wanted
 {
-	const int KEY_RANGE = 255;
+	Engine* Engine::instance = nullptr;
 
 	Engine::Engine()
 	{
+		instance = this;
+		input = new Input();
+		// 힙에 생성되나 힙에 생성된 이 주소가
+		// input 클래스의 Input* Input::instance = nullptr; 에 의해
+		// 데이터 영역에 저장된다.
+		// 데이터 영역에 input을 가르키는 주소가 저장되는 것!!
 	}
 
 	Engine::~Engine()
 	{
+		if (mainLevel)
+		{
+			delete mainLevel;
+			mainLevel = nullptr;
+		}
+
+		if (input)
+		{
+			delete input;
+			input = nullptr;
+		}
 	}
 
 	void Engine::Run()
@@ -49,7 +67,7 @@ namespace Wanted
 
 			if (deltaTime >= oneFrameTime)
 			{
-				ProcessInput();
+				input->ProcessInput();
 
 				// 프레임 처리
 				BeginPlay();
@@ -57,10 +75,7 @@ namespace Wanted
 				Draw();
 
 				previousTime = currentTime;
-
-				// 현재 입력 값을 이전 입력 값으로 저장
-				for (int i = 0; i < KEY_RANGE; i++)
-					keyStates[i].wasKeyDown = keyStates[i].isKeyDown;
+				input->SavePreviousInputStates();
 			}
 		}
 
@@ -72,23 +87,6 @@ namespace Wanted
 	void Engine::QuitEngine()
 	{
 		isQuit = true;
-	}
-
-	bool Engine::GetKeyDown(int keyConde)
-	{
-		return keyStates[keyConde].isKeyDown
-			&& !keyStates[keyConde].wasKeyDown;
-	}
-
-	bool Engine::GetKeyUp(int keyConde)
-	{
-		return keyStates[keyConde].wasKeyDown
-			&& !keyStates[keyConde].isKeyDown;
-	}
-
-	bool Engine::GetKey(int keyConde)
-	{
-		return keyStates[keyConde].isKeyDown;
 	}
 
 	void Engine::SetNewLevel(Level* newLevel)
@@ -103,12 +101,15 @@ namespace Wanted
 		mainLevel = newLevel;
 	}
 
-	void Engine::ProcessInput()
+	Engine& Engine::Get()
 	{
-		// 키 마다의 입력 읽기.
-		// 운영체제가 제공하는 기능을 사용할 수 밖에 없다.
-		for(int i = 0; i < KEY_RANGE; i++)
-			keyStates[i].isKeyDown = GetAsyncKeyState(i) & 0x8000;
+		if (!instance)
+		{
+			std::cout << "Error: Engine::Get(). instance is null\n";
+			__debugbreak();
+		}
+
+		return *instance;
 	}
 
 	void Engine::BeginPlay()
@@ -129,7 +130,7 @@ namespace Wanted
 			<< std::endl;
 		*/
 
-		if (GetKeyDown(VK_ESCAPE))
+		if (input->GetKeyDown(VK_ESCAPE))
 			QuitEngine();
 
 		if (!mainLevel)

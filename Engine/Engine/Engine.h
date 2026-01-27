@@ -3,14 +3,10 @@
 
 namespace Wanted
 {
+	class Input;
+
 	class NAOMI_API Engine
 	{
-		struct KeyState
-		{
-			bool isKeyDown = false;
-			bool wasKeyDown = false;
-		};
-
 	public:
 		Engine();
 		~Engine();
@@ -19,16 +15,12 @@ namespace Wanted
 		void Run();
 		void QuitEngine();
 
-		// 입력 확인 함수
-		bool GetKeyDown(int keyConde);
-		bool GetKeyUp(int keyConde);
-		bool GetKey(int keyConde);
-
 		// 새 레벨 추가 함수
 		void SetNewLevel(class Level* newLevel);
 
+		static Engine& Get();
+
 	private:
-		void ProcessInput();
 		void BeginPlay();
 		void Tick(float deletaTime);
 		void Draw();
@@ -36,10 +28,10 @@ namespace Wanted
 	private:
 		// 엔진 종료 플래그.
 		bool isQuit = false;
-
-		KeyState keyStates[255] = { };
-
+		Input* input = nullptr;
 		class Level* mainLevel = nullptr;
+
+		static Engine* instance;
 	};
 }
 

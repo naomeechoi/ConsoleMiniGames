@@ -1,7 +1,7 @@
 #pragma once
-#include "Actor.h"
+#include "Actor/Actor.h"
 
-class NAOMI_API TestActor : public Wanted::Actor
+class TestActor : public Wanted::Actor
 {
 protected:
 	virtual void BeginPlay() override;
