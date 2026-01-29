@@ -3,10 +3,14 @@
 #include "Engine/Engine.h"
 #include <iostream>
 
+TestActor::TestActor()
+	: super('T', Wanted::Vector2(2,3))
+{
+}
+
 void TestActor::BeginPlay()
 {
 	Actor::BeginPlay();
-	std::cout << "TestActor::BeginPlay()." << std::endl;
 }
 
 void TestActor::Tick(float deltaTime)

@@ -17,6 +17,8 @@ namespace Wanted
 		// input 클래스의 Input* Input::instance = nullptr; 에 의해
 		// 데이터 영역에 저장된다.
 		// 데이터 영역에 input을 가르키는 주소가 저장되는 것!!
+
+		LoadSetting();
 	}
 
 	Engine::~Engine()
@@ -44,8 +46,8 @@ namespace Wanted
 		int64_t previousTime = 0;
 
 		// 기준 프레임 (단위: 초)
-		float targetFrameRate = 120.0f;
-		float oneFrameTime = 1.0f / targetFrameRate;
+		setting.framerate = setting.framerate == 0.0f ? 60.0f : setting.framerate;
+		float oneFrameTime = 1.0f / setting.framerate;
 
 		LARGE_INTEGER time;
 		QueryPerformanceCounter(&time);
@@ -110,6 +112,25 @@ namespace Wanted
 		}
 
 		return *instance;
+	}
+
+	void Engine::LoadSetting()
+	{
+		FILE* file = nullptr;
+		fopen_s(&file, "../Config/Setting.txt", "rt");
+		if (!file)
+		{
+			std::cout << "Fail to open engine setting file." << std::endl;
+			__debugbreak();
+			return;
+		}
+
+		char buffer[2048] = {};
+		size_t readSize = fread(buffer, sizeof(char), 2048, file);
+
+		sscanf_s(buffer, "framerate = %f", &setting.framerate);
+
+		fclose(file);
 	}
 
 	void Engine::BeginPlay()

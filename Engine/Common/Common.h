@@ -1,4 +1,6 @@
 #pragma once
+#pragma warning(disable: 4251)
+#pragma warning(disable: 4172)
 
 //이렇게 활성화도 가능
 //#define ENGINE_BUILD_DLL 1 -> 사용하면 1

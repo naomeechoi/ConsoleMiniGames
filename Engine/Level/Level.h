@@ -1,7 +1,5 @@
 #pragma once
-#pragma warning(disable: 4251)
-#include "Common/Common.h"
-
+#include "Common/RTTI.h"
 #include <vector>
 
 namespace Wanted
@@ -9,8 +7,9 @@ namespace Wanted
 	// 전방 선언
 	class Actor;
 	// 담당 임무: 레벨에 있는 모든 액터(물체) 관리.
-	class NAOMI_API Level
+	class NAOMI_API Level : public RTTI
 	{
+		RTTI_DECLARATIONS(Level, RTTI)
 	public:
 		Level();
 		virtual ~Level();
