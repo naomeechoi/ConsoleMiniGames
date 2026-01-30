@@ -10,6 +10,7 @@
 Player::Player()
 	: super('T', Wanted::Vector2(5,5), Wanted::Color::Red)
 {
+	sortingOrder = 10;
 }
 
 void Player::BeginPlay()

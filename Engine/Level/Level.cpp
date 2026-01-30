@@ -44,7 +44,20 @@ namespace Wanted
 	{
 		for (Actor* actor : actors)
 		{
-			actor->Draw();
+			Actor* search = nullptr;
+			for (Actor* otherActor : actors)
+			{
+				if (actor == otherActor)
+					continue;
+
+				if (actor->GetPosition() == otherActor->GetPosition())
+				{
+					search = otherActor;
+				}
+			}
+
+			if(!search || search->GetSortingOrder() < actor->GetSortingOrder())
+				actor->Draw();
 		}
 	}
 
