@@ -7,10 +7,14 @@
 #include <iostream>
 #include <Windows.h>
 
-Player::Player()
-	: super('T', Wanted::Vector2(5,5), Wanted::Color::Red)
+Player::Player(const Vector2& position)
+	: super('P', position, Color::Yellow)
 {
 	sortingOrder = 10;
+}
+
+Player::~Player()
+{
 }
 
 void Player::BeginPlay()

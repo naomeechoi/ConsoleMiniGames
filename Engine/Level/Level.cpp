@@ -44,7 +44,7 @@ namespace Wanted
 	{
 		for (Actor* actor : actors)
 		{
-			Actor* search = nullptr;
+			Actor* zUpActor = nullptr;
 			for (Actor* otherActor : actors)
 			{
 				if (actor == otherActor)
@@ -52,12 +52,15 @@ namespace Wanted
 
 				if (actor->GetPosition() == otherActor->GetPosition())
 				{
-					search = otherActor;
+					if (actor->GetSortingOrder() < otherActor->GetSortingOrder())
+						zUpActor = otherActor;
 				}
 			}
 
-			if(!search || search->GetSortingOrder() < actor->GetSortingOrder())
-				actor->Draw();
+			if (zUpActor)
+				continue;
+
+			actor->Draw();
 		}
 	}
 
