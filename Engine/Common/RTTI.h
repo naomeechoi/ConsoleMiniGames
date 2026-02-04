@@ -1,7 +1,7 @@
 #pragma once
-#include "Common/Common.h"
+#include "Common.h"
 
-namespace Wanted
+namespace MinigameEngine
 {
 	// 커스텀 RTTI를 제공하는 클래스의 최상위 클래스
 	class NAOMI_API RTTI
@@ -17,6 +17,13 @@ namespace Wanted
 		virtual bool Is(const size_t id) const
 		{
 			return false;
+		}
+
+		// 타입 질문 함수
+		template<typename T>
+		bool IsTypeOf()
+		{
+			return Is(T::TypeIdClass());
 		}
 
 		template<typename T>

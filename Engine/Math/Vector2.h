@@ -2,7 +2,7 @@
 #include "Common/Common.h"
 #include <Windows.h>
 
-namespace Wanted
+namespace MinigameEngine
 {
 	class NAOMI_API Vector2
 	{

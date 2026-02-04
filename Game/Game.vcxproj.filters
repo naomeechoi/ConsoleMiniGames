@@ -18,42 +18,51 @@
     <ClCompile Include="Main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Level\TestLevel.cpp">
+    <ClCompile Include="Game\Game.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Actor\Box.cpp">
+    <ClCompile Include="PreGameLevel\LoadingLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Actor\Player.cpp">
+    <ClCompile Include="PreGameLevel\StartLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Actor\Wall.cpp">
+    <ClCompile Include="PreGameLevel\MenuLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Actor\Ground.cpp">
+    <ClCompile Include="SpotTheDifference\Mode\SpotTheDifferenceMode.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Actor\Target.cpp">
+    <ClCompile Include="SpotTheDifference\Level\SpotTheDifferenceLevel.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="TextActor\Pound.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Level\TestLevel.h">
+    <ClInclude Include="Game\Game.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Actor\Box.h">
+    <ClInclude Include="PreGameLevel\LoadingLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Actor\Player.h">
+    <ClInclude Include="PreGameLevel\StartLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Actor\Wall.h">
+    <ClInclude Include="PreGameLevel\MenuLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Actor\Ground.h">
+    <ClInclude Include="SpotTheDifference\Mode\SpotTheDifferenceMode.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Actor\Target.h">
+    <ClInclude Include="SpotTheDifference\Level\SpotTheDifferenceLevel.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\LevelType.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="TextActor\Pound.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

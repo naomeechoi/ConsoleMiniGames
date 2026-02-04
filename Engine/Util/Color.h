@@ -1,0 +1,37 @@
+#pragma once
+
+#include "Common/Common.h"
+#include <Windows.h>
+
+namespace MinigameEngine
+{
+	// 콘솔에 텍스트 색상 등을 지정할 때 사용
+	// 색상 강타입 열거형
+    enum class NAOMI_API Color : unsigned short
+    {
+        Black = 0,
+        Red = FOREGROUND_RED,
+        Green = FOREGROUND_GREEN,
+        Blue = FOREGROUND_BLUE,
+        Yellow = FOREGROUND_RED | FOREGROUND_GREEN,
+        Magenta = FOREGROUND_RED | FOREGROUND_BLUE,
+        Cyan = FOREGROUND_GREEN | FOREGROUND_BLUE,
+        White = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+
+        // 밝은 버전 (FOREGROUND_INTENSITY)
+        LightRed = FOREGROUND_RED | FOREGROUND_INTENSITY,
+        LightGreen = FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+        LightBlue = FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+        LightYellow = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+        LightCyan = FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+        LightMagenta = FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+        LightWhite = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+
+        // 파스텔 느낌 조합 (연한 색 강조)
+        PastelPink = FOREGROUND_RED | FOREGROUND_INTENSITY | FOREGROUND_GREEN,
+        PastelMint = FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_BLUE,
+        PastelSky = FOREGROUND_BLUE | FOREGROUND_INTENSITY | FOREGROUND_GREEN,
+        PastelLavender = FOREGROUND_BLUE | FOREGROUND_INTENSITY | FOREGROUND_RED,
+        PastelPeach = FOREGROUND_RED | FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_BLUE
+    };
+}

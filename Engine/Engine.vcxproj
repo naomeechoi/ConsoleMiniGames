@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -58,6 +58,7 @@
       <PreprocessorDefinitions>ENGINE_BUILD_DLL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -80,6 +81,7 @@ xcopy "$(OutDir)\Engine.lib" "..\Library\Engine\$(Platform)\$(Configuration)\" /
       <PreprocessorDefinitions>ENGINE_BUILD_DLL;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -94,23 +96,34 @@ xcopy "$(OutDir)\Engine.lib" "..\Library\Engine\$(Platform)\$(Configuration)\" /
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Actor\Actor.cpp" />
-    <ClCompile Include="Core\Input.cpp" />
-    <ClCompile Include="Engine\Engine.cpp" />
-    <ClCompile Include="Level\Level.cpp" />
+    <ClCompile Include="Core\LevelManager.cpp" />
+    <ClCompile Include="Render\Renderer.cpp" />
+    <ClCompile Include="Render\ScreenBuffer.cpp" />
+    <ClCompile Include="System\Input.cpp" />
+    <ClCompile Include="Util\Console.cpp" />
+    <ClCompile Include="Util\LayoutCalculator.cpp" />
+    <ClCompile Include="World\Actor.cpp" />
+    <ClCompile Include="Core\Engine.cpp" />
+    <ClCompile Include="World\Mode.cpp" />
+    <ClCompile Include="World\Level.cpp" />
     <ClCompile Include="Math\Vector2.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Actor\Actor.h" />
+    <ClInclude Include="Core\LevelManager.h" />
+    <ClInclude Include="Render\Renderer.h" />
+    <ClInclude Include="Render\ScreenBuffer.h" />
+    <ClInclude Include="System\Input.h" />
+    <ClInclude Include="Util\Console.h" />
+    <ClInclude Include="Util\Delete.h" />
+    <ClInclude Include="Util\LayoutCalculator.h" />
+    <ClInclude Include="World\Actor.h" />
     <ClInclude Include="Common\Common.h" />
     <ClInclude Include="Common\RTTI.h" />
-    <ClInclude Include="Core\Input.h" />
-    <ClInclude Include="Core\Renderer.h" />
-    <ClInclude Include="Engine\Engine.h" />
-    <ClInclude Include="Level\Level.h" />
-    <ClInclude Include="Math\Color.h" />
+    <ClInclude Include="Core\Engine.h" />
+    <ClInclude Include="World\Mode.h" />
+    <ClInclude Include="World\Level.h" />
+    <ClInclude Include="Util\Color.h" />
     <ClInclude Include="Math\Vector2.h" />
-    <ClInclude Include="Util\Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
