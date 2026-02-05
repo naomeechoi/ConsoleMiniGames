@@ -2,6 +2,7 @@
 #include "Common/RTTI.h"
 #include <vector>
 #include <optional>
+#include <Math/Vector2.h>
 
 namespace MinigameEngine
 {
@@ -31,6 +32,8 @@ namespace MinigameEngine
 
 		std::optional<int> ConsumeRequestedLevel();
 
+		void SetLevelDisplaySize(Vector2 displaySize);
+
 	protected:
 		std::vector<Actor*> actors;
 		// dll 쓸때는 템플릿 사용하면 안된다.
@@ -39,6 +42,7 @@ namespace MinigameEngine
 		std::vector<Actor*> addRequestedActors;
 
 		std::optional<int> requestedLevel;
+		Vector2 displaySize;
 	};
 }
 

@@ -159,9 +159,9 @@
     <ClCompile Include="PreGameLevel\LoadingLevel.cpp" />
     <ClCompile Include="PreGameLevel\StartLevel.cpp" />
     <ClCompile Include="PreGameLevel\MenuLevel.cpp" />
-    <ClCompile Include="SpotTheDifference\Mode\SpotTheDifferenceMode.cpp" />
-    <ClCompile Include="SpotTheDifference\Level\SpotTheDifferenceLevel.cpp" />
-    <ClCompile Include="TextActor\Pound.cpp" />
+    <ClCompile Include="SpotTheDifference\SpotTheDifferenceMode.cpp" />
+    <ClCompile Include="SpotTheDifference\SpotTheDifferenceLevel.cpp" />
+    <ClCompile Include="UI\UITop.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\LevelType.h" />
@@ -169,9 +169,9 @@
     <ClInclude Include="PreGameLevel\LoadingLevel.h" />
     <ClInclude Include="PreGameLevel\StartLevel.h" />
     <ClInclude Include="PreGameLevel\MenuLevel.h" />
-    <ClInclude Include="SpotTheDifference\Mode\SpotTheDifferenceMode.h" />
-    <ClInclude Include="SpotTheDifference\Level\SpotTheDifferenceLevel.h" />
-    <ClInclude Include="TextActor\Pound.h" />
+    <ClInclude Include="SpotTheDifference\SpotTheDifferenceMode.h" />
+    <ClInclude Include="SpotTheDifference\SpotTheDifferenceLevel.h" />
+    <ClInclude Include="UI\UITop.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

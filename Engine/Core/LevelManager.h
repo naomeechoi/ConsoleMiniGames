@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "Math/Vector2.h"
 
 namespace MinigameEngine
 {
@@ -13,7 +14,7 @@ namespace MinigameEngine
 	class NAOMI_API LevelManager
 	{
 	public:
-		LevelManager();
+		LevelManager(Vector2 windowSize);
 		~LevelManager();
 
 		// 복사 생성자/복사 대입 금지
@@ -28,6 +29,7 @@ namespace MinigameEngine
 		void AddLevel(int id, std::unique_ptr<Level> state);
 		void SetLevel(int id);
 		Level* GetGameState() const { return current; };
+		void BeginPlay();
 		void Tick(float deltaTime, Input* input);
 		void Draw();
 		void ProcessAddAndDestroyActorsOnLevel();
@@ -36,5 +38,6 @@ namespace MinigameEngine
 	private:
 		std::unordered_map<int, std::unique_ptr<Level>> levels;
 		Level* current = nullptr;
+		Vector2 windowSize;
 	};
 }

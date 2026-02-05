@@ -4,9 +4,12 @@
 #include "Render/Renderer.h"
 
 #include <iostream>
-#include <Windows.h>
+#include <string>
 #include <fstream>
+#include <sstream>
+#include <Windows.h>
 #include "Util/LayoutCalculator.h"
+#include "Math/Vector2.h"
 
 namespace MinigameEngine
 {
@@ -16,9 +19,11 @@ namespace MinigameEngine
 	{
 		instance = this;
 		LoadSetting();
+		LoadEdgeTxt();
+
 		renderer = new Renderer(Vector2(setting.width, setting.height));
 
-		levelManager = std::make_unique<LevelManager>();
+		levelManager = std::make_unique<LevelManager>(Vector2(setting.width -1, setting.height - 1));
 		// Ä¿¼­ ²ô±â
 		Console::SetCursorVisible(false);
 
@@ -78,7 +83,9 @@ namespace MinigameEngine
 			if (deltaTime >= oneFrameTime)
 			{
 				input.Update();
-				Update(deltaTime);
+
+				BeginPlay();
+				Tick(deltaTime);
 				Draw();
 				previousTime = currentTime;
 
@@ -88,7 +95,15 @@ namespace MinigameEngine
 		}
 	}
 
-	void Engine::Update(float deltaTime)
+	void Engine::BeginPlay()
+	{
+		if (levelManager)
+		{
+			levelManager->BeginPlay();
+		}
+	}
+
+	void Engine::Tick(float deltaTime)
 	{
 		if (levelManager)
 		{
@@ -98,6 +113,7 @@ namespace MinigameEngine
 
 	void Engine::Draw()
 	{
+		DrawEdge();
 		if (levelManager && !isQuit)
 		{
 			levelManager->Draw();
@@ -166,5 +182,29 @@ namespace MinigameEngine
 		size_t end = str.find_last_not_of(" \t");
 
 		return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
+	}
+
+	void Engine::LoadEdgeTxt()
+	{
+		std::ifstream file("../Assets/Edge.txt", std::ios::in);
+		if (!file.is_open())
+		{
+			std::cout << "Fail to open Edge.txt file." << std::endl;
+			__debugbreak();
+			return;
+		}
+
+		std::ostringstream buffer;
+		buffer << file.rdbuf();
+		edgeStr = buffer.str();
+	}
+
+	void Engine::DrawEdge()
+	{
+		Renderer::Get().SubmitMultiLine(
+			edgeStr.c_str(),
+			Vector2(0, 0),
+			Color::Green
+		);
 	}
 }

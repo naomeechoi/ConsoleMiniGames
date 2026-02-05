@@ -3,7 +3,7 @@
 #include "PreGameLevel/StartLevel.h"
 #include "PreGameLevel/MenuLevel.h"
 #include "PreGameLevel/LoadingLevel.h"
-#include "SpotTheDifference/Level/SpotTheDifferenceLevel.h"
+#include "SpotTheDifference/SpotTheDifferenceLevel.h"
 #include "Common/LevelType.h"
 
 Game* Game::instance = nullptr;

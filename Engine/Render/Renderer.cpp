@@ -2,6 +2,8 @@
 #include "ScreenBuffer.h"
 #include "Util/Console.h"
 #include "Util/Delete.h"
+#include <sstream>   // std::istringstream
+#include <string>  
 #include <vector>
 
 namespace MinigameEngine
@@ -14,7 +16,7 @@ namespace MinigameEngine
 		memset(charInfoArray, 0, sizeof(CHAR_INFO) * bufferCount);
 
 		sortingOrderArray = new int[bufferCount];
-		memset(charInfoArray, 0, sizeof(int) * bufferCount);
+		memset(sortingOrderArray, -1, sizeof(int) * bufferCount);
 	}
 
 	Renderer::Frame::~Frame()
@@ -91,14 +93,11 @@ namespace MinigameEngine
 		// 렌더큐 순회하면서 프레임 채우기
 		for (const RenderCommand& command : renderQueue)
 		{
-			if (!command.text)
+			const int length = static_cast<int>(command.text.size());
+			if (length <= 0)
 				continue;
 
 			if (command.position.y < 0 || command.position.y > screenSize.y)
-				continue;
-
-			const int length = static_cast<int>(strlen(command.text));
-			if (length <= 0)
 				continue;
 
 			const int startX = command.position.x;
@@ -124,8 +123,14 @@ namespace MinigameEngine
 				if (frame->sortingOrderArray[index] > command.sortingOrder)
 					continue;
 
+				WORD bg = 0;
+				if (!debugSet.empty() && debugSet.count(Vector2(x, command.position.y)))
+				{
+					bg = 4;
+				}
+				WORD fg = (WORD)command.color;
 				frame->charInfoArray[index].Char.AsciiChar = command.text[sourceIndex];
-				frame->charInfoArray[index].Attributes = (WORD)command.color;
+				frame->charInfoArray[index].Attributes = (fg & 0x0F) | (bg << 4);
 				frame->sortingOrderArray[index] = command.sortingOrder;
 			}
 		}
@@ -152,6 +157,27 @@ namespace MinigameEngine
 		command.color = color;
 		command.sortingOrder = sortingOrder;
 		renderQueue.emplace_back(command);
+	}
+
+	void Renderer::SubmitMultiLine(
+		const char* text,
+		const Vector2& position,
+		Color color,
+		int sortingOrder)
+	{
+		if (!text)
+			return;
+
+		std::istringstream iss(text);
+		std::string line;
+		int y = position.y;
+
+		while (std::getline(iss, line))
+		{
+			// 빈 줄도 렌더링 가능하도록 line.c_str() 그대로 전달
+			Submit(line.c_str(), { position.x, y }, color, sortingOrder);
+			y++;
+		}
 	}
 
 	void Renderer::Clear()

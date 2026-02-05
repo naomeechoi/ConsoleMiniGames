@@ -14,12 +14,13 @@ public:
 	virtual void Draw() override;
 
 private:
+	void DrawMenuStr();
+
+private:
 	std::vector<int> items;
 	int curIdx = 0;
 
 	Color selectedColor = Color::LightGreen;
 	Color color = Color::LightYellow;
-
-	bool isDrawn = false;
 };
 

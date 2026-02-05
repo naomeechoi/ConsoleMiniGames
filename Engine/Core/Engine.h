@@ -4,6 +4,7 @@
 #include "System/Input.h"
 
 #include <memory>
+#include <string>
 
 namespace MinigameEngine
 {
@@ -38,13 +39,20 @@ namespace MinigameEngine
 		EngineSetting setting;
 		Input input;
 
+		std::string edgeStr;
+
 	private:
 		void LoadSetting();
 		std::string trim(const std::string& str);
-		void Update(float deltaTime);
+		void BeginPlay();
+		void Tick(float deltaTime);
 		void Draw();
 		void ProcessActorsOnLevel();
 		void ChangeLevel();
+
+	private:
+		void LoadEdgeTxt();
+		void DrawEdge();
 
 	public:
 		LayoutCalculator* layoutCalculator;

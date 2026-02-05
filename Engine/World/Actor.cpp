@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <Windows.h>
+#include "System/Timer.h"
 
 namespace MinigameEngine
 {

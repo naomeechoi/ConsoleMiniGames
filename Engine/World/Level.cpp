@@ -1,6 +1,7 @@
 #include "Level.h"
 #include "Actor.h"
 #include "System/Input.h"
+#include "Core/Engine.h"
 
 namespace MinigameEngine
 {
@@ -96,5 +97,10 @@ namespace MinigameEngine
 		auto temp = requestedLevel;
 		requestedLevel.reset();
 		return temp;
+	}
+
+	void Level::SetLevelDisplaySize(Vector2 displaySize)
+	{
+		this->displaySize = displaySize;
 	}
 }

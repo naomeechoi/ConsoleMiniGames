@@ -1,8 +1,10 @@
 #include "LevelManager.h"
+#include "Math/Vector2.h"
 
 namespace MinigameEngine
 {
-	LevelManager::LevelManager()
+	LevelManager::LevelManager(Vector2 windowSize)
+		:windowSize(windowSize)
 	{
 	}
 
@@ -13,6 +15,9 @@ namespace MinigameEngine
 	void LevelManager::AddLevel(int id, std::unique_ptr<Level> state)
 	{
 		levels.emplace(id, std::move(state));
+
+		if(levels[id])
+			levels[id]->SetLevelDisplaySize(windowSize);
 	}
 
 	void LevelManager::SetLevel(int id)
@@ -21,6 +26,14 @@ namespace MinigameEngine
 			current->OnExit();
 
 		current = levels[id].get();
+	}
+
+	void LevelManager::BeginPlay()
+	{
+		if (!current)
+			return;
+
+		current->BeginPlay();
 	}
 
 	void LevelManager::Tick(float deltaTime, Input* input)

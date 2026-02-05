@@ -30,13 +30,13 @@
     <ClCompile Include="PreGameLevel\MenuLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="SpotTheDifference\Mode\SpotTheDifferenceMode.cpp">
+    <ClCompile Include="SpotTheDifference\SpotTheDifferenceMode.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="SpotTheDifference\Level\SpotTheDifferenceLevel.cpp">
+    <ClCompile Include="SpotTheDifference\SpotTheDifferenceLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="TextActor\Pound.cpp">
+    <ClCompile Include="UI\UITop.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -53,16 +53,16 @@
     <ClInclude Include="PreGameLevel\MenuLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="SpotTheDifference\Mode\SpotTheDifferenceMode.h">
+    <ClInclude Include="SpotTheDifference\SpotTheDifferenceMode.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="SpotTheDifference\Level\SpotTheDifferenceLevel.h">
+    <ClInclude Include="SpotTheDifference\SpotTheDifferenceLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Common\LevelType.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="TextActor\Pound.h">
+    <ClInclude Include="UI\UITop.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

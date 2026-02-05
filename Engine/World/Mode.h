@@ -1,5 +1,10 @@
 #pragma once
-class GameMode
+#include "Common/Common.h"
+
+namespace MinigameEngine
 {
-};
+	class NAOMI_API Mode
+	{
+	};
+}
 

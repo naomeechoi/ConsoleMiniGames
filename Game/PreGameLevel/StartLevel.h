@@ -12,13 +12,16 @@ public:
 public:
 	virtual void OnExit() override;
 	virtual void Tick(float deltaTime, Input* input) override;
-	//virtual void Draw() override;
+	virtual void Draw() override;
 
 private:
-	void Load(const char* fileName);
+	void LoadText();
+	void DrawStarStr();
 
 private:
-	std::vector<std::string> lines;
+	std::string mainStr;
 	bool isDrawn = false;
+	int startStrWidth = 0;
+	int startStrHeight = 0;
 };
 

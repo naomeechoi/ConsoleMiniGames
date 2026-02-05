@@ -1,12 +1,12 @@
 #include "MenuLevel.h"
 #include "Game/Game.h"
 #include "Util/Console.h"
+#include "Render/Renderer.h"
 #include <iostream>
 
 void MenuLevel::OnExit()
 {
 	curIdx = 0;
-	isDrawn = false;
 }
 
 void MenuLevel::Tick(float deltaTime, Input* input)
@@ -15,12 +15,10 @@ void MenuLevel::Tick(float deltaTime, Input* input)
 	if (input->IsKeyPressed(VK_UP))
 	{
 		curIdx = (curIdx - 1 + len) % len;
-		isDrawn = false;
 	}
 	else if (input->IsKeyPressed(VK_DOWN))
 	{
 		curIdx = (curIdx + 1) % len;
-		isDrawn = false;
 	}
 	else if (input->IsKeyPressed(VK_RETURN))
 	{
@@ -36,17 +34,30 @@ void MenuLevel::Tick(float deltaTime, Input* input)
 
 void MenuLevel::Draw()
 {
-	if (isDrawn)
-		return;
+	Level::Draw();
+	DrawMenuStr();
+}
 
-	system("cls");
+void MenuLevel::DrawMenuStr()
+{
+	const int Y_MARGIN = 2;
+	auto& menu = Game::Get()->GetOnMenu();
+	int menuSize = (int)menu.size();
 
-	for (int i = 0; i < Game::Get()->GetOnMenu().size(); i++)
+	int startY = (displaySize.y - menuSize) / 2;
+
+	for (int i = 0; i < menuSize; i++)
 	{
-		Console::SetConsoleTextColor(i == curIdx ? selectedColor : color);
-		std::cout << Game::Get()->GetOnMenu()[i].second << std::endl;
+		const std::string& menuText = menu[i].second;
+		int startX = (displaySize.x - (int)menuText.size()) / 2;
+	
+		Renderer::Get().SubmitMultiLine(
+			menuText.c_str(),
+			Vector2(startX, startY),
+			(i == curIdx ? selectedColor : color)
+		);
+		startY += Y_MARGIN;
 	}
 
 	Console::SetConsoleTextColor(Color::White);
-	isDrawn = true;
 }

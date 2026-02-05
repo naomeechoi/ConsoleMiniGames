@@ -1,6 +1,7 @@
 #pragma once
 #include "Common/Common.h"
 #include <Windows.h>
+#include <functional>
 
 namespace MinigameEngine
 {
@@ -36,3 +37,13 @@ namespace MinigameEngine
 	};
 }
 
+namespace std {
+	template<>
+	struct hash<MinigameEngine::Vector2>
+	{
+		size_t operator()(const MinigameEngine::Vector2& v) const noexcept
+		{
+			return (std::hash<int>()(v.x) * 397) ^ std::hash<int>()(v.y);
+		}
+	};
+}
