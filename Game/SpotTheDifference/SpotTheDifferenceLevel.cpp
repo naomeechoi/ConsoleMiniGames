@@ -15,6 +15,44 @@
 #include <sstream>
 #include <algorithm>
 
+void SpotTheDifferenceLevel::Cursor::Init(Vector2 topLeft, Vector2 size)
+{
+	pos = topLeft;
+	this->topLeft = topLeft;
+	this->size = size;
+}
+
+void SpotTheDifferenceLevel::Cursor::Move(int dx, int dy)
+{
+	int x = pos.x + dx;
+	int y = pos.y + dy;
+	x = std::clamp(x, topLeft.x, topLeft.x + size.x - 1);
+	y = std::clamp(y, topLeft.y, topLeft.y + size.y - 1);
+	pos.x = x;
+	pos.y = y;
+}
+
+void SpotTheDifferenceLevel::Cursor::Tick(float deltaTime, Input* input)
+{
+	
+	if (input->IsKeyPressed(VK_LEFT))
+	{
+		Move(-1, 0);
+	}
+	if (input->IsKeyPressed(VK_RIGHT))
+	{
+		Move(1, 0);
+	}
+	if (input->IsKeyPressed(VK_UP))
+	{
+		Move(0, -1);
+	}
+	if (input->IsKeyPressed(VK_DOWN))
+	{
+		Move(0, 1);
+	}
+}
+
 SpotTheDifferenceLevel::SpotTheDifferenceLevel()
 {
 }
@@ -67,6 +105,8 @@ void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 	{
 		RequestChangeLevel((int)LevelType::Menu);
 	}
+
+	cursor.Tick(deltaTime, input);
 }
 
 void SpotTheDifferenceLevel::Draw()
@@ -77,6 +117,18 @@ void SpotTheDifferenceLevel::Draw()
 		topUI->Draw();
 
 	DrawPaint();
+	char ch = GetCharAtCursor();
+
+	// 임시 문자열이 아닌 고정 버퍼 사용
+	char cursorChar[2] = { ch, '\0' };
+
+	Renderer::Get().Submit(
+		cursorChar,
+		cursor.pos,
+		Color::Black,
+		Color::White,
+		999
+	);
 }
 
 void SpotTheDifferenceLevel::LoadText()
@@ -167,6 +219,7 @@ void SpotTheDifferenceLevel::MakeDifferences()
 		answerSet.insert({ x + rightStartX, y + startY });
 	}
 
+	cursor.Init(Vector2(rightStartX, startY), paintSize);
 	Renderer::Get().SetDebugMode(answerSet);
 
 	if (mode)
@@ -198,4 +251,25 @@ void SpotTheDifferenceLevel::DrawPaint()
 	);
 
 	Console::SetConsoleTextColor(Color::White);
+}
+
+char SpotTheDifferenceLevel::GetCharAtCursor() const
+{
+	int localX = cursor.pos.x - cursor.topLeft.x;
+	int localY = cursor.pos.y - cursor.topLeft.y;
+
+	if (localY < 0 || localY >= (int)lineLengths.size())
+		return ' ';
+
+	int lineLen = lineLengths[localY];
+	if (localX < 0 || localX >= lineLen)
+		return ' ';
+
+	// paintStr2에서 해당 줄 시작 인덱스 계산
+	int idx = 0;
+	for (int y = 0; y < localY; y++)
+		idx += lineLengths[y] + 1; // +1 : '\n'
+
+	idx += localX;
+	return paintStr2[idx];
 }

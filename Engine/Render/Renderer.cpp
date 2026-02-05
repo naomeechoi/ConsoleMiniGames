@@ -123,14 +123,14 @@ namespace MinigameEngine
 				if (frame->sortingOrderArray[index] > command.sortingOrder)
 					continue;
 
-				WORD bg = 0;
+				WORD color = (WORD)command.color;
+				WORD bg = (WORD)command.bgColor;
 				if (!debugSet.empty() && debugSet.count(Vector2(x, command.position.y)))
 				{
 					bg = 4;
 				}
-				WORD fg = (WORD)command.color;
 				frame->charInfoArray[index].Char.AsciiChar = command.text[sourceIndex];
-				frame->charInfoArray[index].Attributes = (fg & 0x0F) | (bg << 4);
+				frame->charInfoArray[index].Attributes = (color & 0x0F) | (bg << 4);
 				frame->sortingOrderArray[index] = command.sortingOrder;
 			}
 		}
@@ -155,6 +155,22 @@ namespace MinigameEngine
 		command.text = text;
 		command.position = position;
 		command.color = color;
+		command.sortingOrder = sortingOrder;
+		renderQueue.emplace_back(command);
+	}
+
+	void Renderer::Submit(
+		const char* text,
+		const Vector2& position,
+		Color color,
+		Color bgColor,
+		int sortingOrder)
+	{
+		RenderCommand command = {};
+		command.text = text;
+		command.position = position;
+		command.color = color;
+		command.bgColor = bgColor;
 		command.sortingOrder = sortingOrder;
 		renderQueue.emplace_back(command);
 	}

@@ -27,6 +27,7 @@ namespace MinigameEngine
 			std::string text;
 			Vector2 position = Vector2::Zero;
 			Color color = Color::White;
+			Color bgColor = Color::Black;
 			int sortingOrder = 0;
 		};
 
@@ -35,6 +36,7 @@ namespace MinigameEngine
 		~Renderer();
 		void Draw();
 		void Submit(const char* text, const Vector2& position, Color color = Color::White, int sortingOrder = 0);
+		void Submit(const char* text, const Vector2& position, Color color = Color::White, Color bgColor = Color::Black, int sortingOrder = 0);
 		void SubmitMultiLine(const char* text, const Vector2& position, Color color = Color::White, int sortingOrder = 0);
 		static Renderer& Get();
 
