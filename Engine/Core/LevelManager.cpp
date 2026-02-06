@@ -20,12 +20,15 @@ namespace MinigameEngine
 			levels[id]->SetLevelDisplaySize(windowSize);
 	}
 
-	void LevelManager::SetLevel(int id)
+	void LevelManager::SetLevel(int id, int result)
 	{
 		if (current)
 			current->OnExit();
 
 		current = levels[id].get();
+
+		if(current)
+			current->SetResult(result);
 	}
 
 	void LevelManager::BeginPlay()
@@ -68,7 +71,24 @@ namespace MinigameEngine
 		if (auto nextLevel = current->ConsumeRequestedLevel())
 		{
 			current->OnExit();
-			SetLevel(*nextLevel);
+
+			if (auto result = current->ConsumeRequestedShowResult())
+			{
+				SetLevel(*nextLevel, *result);
+			}
+			else
+			{
+
+				SetLevel(*nextLevel);
+			}
 		}
+	}
+
+	Color LevelManager::GetLevelEdgeColor()
+	{
+		if (!current)
+			return Color::Green;
+
+		return current->GetEdgeColor();
 	}
 }

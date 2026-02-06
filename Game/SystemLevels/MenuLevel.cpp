@@ -6,6 +6,7 @@
 
 void MenuLevel::OnExit()
 {
+	Level::OnExit();
 	curIdx = 0;
 }
 

@@ -35,7 +35,13 @@ bool SpotTheDifferenceMode::Check(int pos)
 	return true;
 }
 
+bool SpotTheDifferenceMode::IsGameClear()
+{
+	return answerSet.size() == userAnswerSet.size();
+}
+
 void SpotTheDifferenceMode::Clear()
 {
 	answerSet.clear();
+	userAnswerSet.clear();
 }

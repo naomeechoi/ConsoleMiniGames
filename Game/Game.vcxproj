@@ -154,25 +154,31 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CardMonte\CardMonteLevel.cpp" />
     <ClCompile Include="Game\Game.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="PreGameLevel\LoadingLevel.cpp" />
-    <ClCompile Include="PreGameLevel\StartLevel.cpp" />
-    <ClCompile Include="PreGameLevel\MenuLevel.cpp" />
+    <ClCompile Include="SystemLevels\GameResultLevel.cpp" />
+    <ClCompile Include="SystemLevels\LoadingLevel.cpp" />
+    <ClCompile Include="SystemLevels\StartLevel.cpp" />
+    <ClCompile Include="SystemLevels\MenuLevel.cpp" />
     <ClCompile Include="SpotTheDifference\SpotTheDifferenceMode.cpp" />
     <ClCompile Include="SpotTheDifference\SpotTheDifferenceLevel.cpp" />
+    <ClCompile Include="UI\UIColorEffect.cpp" />
     <ClCompile Include="UI\UICorrectCount.cpp" />
     <ClCompile Include="UI\UILoadingBar.cpp" />
     <ClCompile Include="UI\UITop.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CardMonte\CardMonteLevel.h" />
     <ClInclude Include="Common\LevelType.h" />
     <ClInclude Include="Game\Game.h" />
-    <ClInclude Include="PreGameLevel\LoadingLevel.h" />
-    <ClInclude Include="PreGameLevel\StartLevel.h" />
-    <ClInclude Include="PreGameLevel\MenuLevel.h" />
+    <ClInclude Include="SystemLevels\GameResultLevel.h" />
+    <ClInclude Include="SystemLevels\LoadingLevel.h" />
+    <ClInclude Include="SystemLevels\StartLevel.h" />
+    <ClInclude Include="SystemLevels\MenuLevel.h" />
     <ClInclude Include="SpotTheDifference\SpotTheDifferenceMode.h" />
     <ClInclude Include="SpotTheDifference\SpotTheDifferenceLevel.h" />
+    <ClInclude Include="UI\UIColorEffect.h" />
     <ClInclude Include="UI\UICorrectCount.h" />
     <ClInclude Include="UI\UILoadingBar.h" />
     <ClInclude Include="UI\UITop.h" />

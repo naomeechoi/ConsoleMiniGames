@@ -27,5 +27,12 @@ namespace MinigameEngine {
 	{
 		targetTime = newTargetTime;
 	}
+
+	float Timer::GetRatio() const
+	{
+		if (targetTime <= 0.0f)
+			return 1.0f;
+		return elapsedTime / targetTime; // 0.0 ~ 1.0
+	}
 }
 

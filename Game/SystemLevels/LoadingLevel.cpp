@@ -2,6 +2,7 @@
 
 void LoadingLevel::OnExit()
 {
+	Level::OnExit();
 }
 
 void LoadingLevel::Tick(float deltaTime, Input* input)

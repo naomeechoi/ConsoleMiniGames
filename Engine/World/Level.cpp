@@ -23,6 +23,11 @@ namespace MinigameEngine
 		actors.clear();
 	}
 
+	void Level::OnExit()
+	{
+		result = -1;
+	}
+
 	void Level::BeginPlay()
 	{
 		for (Actor* actor : actors)
@@ -92,6 +97,11 @@ namespace MinigameEngine
 		requestedLevel = levelID;
 	}
 
+	void Level::RequestShowResult(int result)
+	{
+		requestedShowResult = result;
+	}
+
 	std::optional<int> Level::ConsumeRequestedLevel()
 	{
 		auto temp = requestedLevel;
@@ -99,8 +109,25 @@ namespace MinigameEngine
 		return temp;
 	}
 
+	std::optional<int> Level::ConsumeRequestedShowResult()
+	{
+		auto temp = requestedShowResult;
+		requestedShowResult.reset();
+		return temp;
+	}
+
 	void Level::SetLevelDisplaySize(Vector2 displaySize)
 	{
 		this->displaySize = displaySize;
+	}
+
+	Color Level::GetEdgeColor()
+	{
+		return edgeColor;
+	}
+
+	void Level::SetResult(int result)
+	{
+		this->result = result;
 	}
 }

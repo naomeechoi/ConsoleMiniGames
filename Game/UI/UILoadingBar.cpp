@@ -1,5 +1,6 @@
 #include "UILoadingBar.h"
 #include "Render/Renderer.h"
+#include "UIColorEffect.h"
 
 UILoadingBar::UILoadingBar(Vector2 position, float maxWidth, float totalTime, char shapeChar)
 	:position(position), maxWidth(maxWidth), totalTime(totalTime), shapeChar(shapeChar)

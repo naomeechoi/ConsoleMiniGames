@@ -11,6 +11,7 @@ class SpotTheDifferenceMode;
 class UITop;
 class UILoadingBar;
 class UICorrectCount;
+class UIColorEffect;
 
 class SpotTheDifferenceLevel : public Level
 {
@@ -50,6 +51,7 @@ private:
 	UITop* topUI = nullptr;
 	UILoadingBar* loadingBarUI = nullptr;
 	UICorrectCount* correctCountUI = nullptr;
+	UIColorEffect* colorEffectUI = nullptr;
 
 	// Paint
 	Vector2 paintSize;
@@ -59,4 +61,5 @@ private:
 
 private:
 	Cursor cursor;
+	Timer timer;
 };

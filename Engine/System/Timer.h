@@ -11,6 +11,7 @@ namespace MinigameEngine
 		void Reset();
 		bool IsTimeOut() const;
 		void SetTargetTime(float newTargetTime);
+		float GetRatio() const;
 
 	private:
 		float elapsedTime = 0.0f;

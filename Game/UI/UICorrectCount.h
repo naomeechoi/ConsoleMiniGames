@@ -7,9 +7,12 @@ using namespace MinigameEngine;
 class UICorrectCount
 {
 public:
-	UICorrectCount(int y, int limitX, int maxCount);
+	UICorrectCount();
 	void Draw();
 	void AddCount(int adding);
+
+	void Start(int y, int limitX, int maxCount);
+	void Clear();
 
 private:
 	int yPos = 0;

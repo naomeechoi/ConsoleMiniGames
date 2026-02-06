@@ -5,6 +5,7 @@
 #include "UI/UITop.h"
 #include "UI/UILoadingBar.h"
 #include "UI/UICorrectCount.h"
+#include "UI/UIColorEffect.h"
 #include "Math/Vector2.h"
 #include "System/Input.h"
 #include "Common/LevelType.h"
@@ -16,6 +17,14 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+
+enum EResult
+{
+	fail = 0,
+	success,
+};
+
+float const PLAYTIME = 30.0f; // TODO: 외부에서 플레이 시간 받 수 있게 수정
 
 void SpotTheDifferenceLevel::Cursor::Init(Vector2 topLeft, Vector2 size)
 {
@@ -79,6 +88,12 @@ SpotTheDifferenceLevel::~SpotTheDifferenceLevel()
 		correctCountUI = nullptr;
 	}
 
+	if (colorEffectUI)
+	{
+		delete colorEffectUI;
+		colorEffectUI = nullptr;
+	}
+
 	if (mode)
 	{
 		delete mode;
@@ -103,17 +118,36 @@ void SpotTheDifferenceLevel::BeginPlay()
 		topUI = new UITop(displaySize.x, Vector2(3, 2), "Spot The Difference");
 
 	if (!loadingBarUI)
-		loadingBarUI = new UILoadingBar(Vector2(3, paintSize.y + 6), ((float)displaySize.x / 4.0f) * 3.0f, 120.0f, '#');
+		loadingBarUI = new UILoadingBar(Vector2(3, paintSize.y + 6), ((float)displaySize.x / 10.0f) * 9.0f, PLAYTIME, '#');
 
 	if (!correctCountUI)
-		correctCountUI = new UICorrectCount(paintSize.y + 6, displaySize.x, 20); // TODO: 하드 코딩 수정 필요
+		correctCountUI = new UICorrectCount(); // TODO: 하드 코딩 수정 필요
+
+	if (!colorEffectUI)
+		colorEffectUI = new UIColorEffect(edgeColor, Color::LightRed, 1.0f, 5); // TODO: 하드 코딩 수정 필요
+
+	if (!mode
+		|| !topUI
+		|| !loadingBarUI
+		|| !correctCountUI
+		|| !colorEffectUI)
+	{
+		// 게임 시작 못하는 상황
+		RequestChangeLevel((int)LevelType::Menu);
+		return;
+	}
+
+	timer.SetTargetTime(PLAYTIME);
 
 	// 로딩바 시작
 	loadingBarUI->Start();
+	correctCountUI->Start(paintSize.y + 6, displaySize.x, 20);
 }
 
 void SpotTheDifferenceLevel::OnExit()
 {
+	Level::OnExit();
+
 	hasBeganPlay = false;
 
 	if (loadingBarUI)
@@ -122,14 +156,31 @@ void SpotTheDifferenceLevel::OnExit()
 		loadingBarUI->Clear();
 	}
 
+	if (colorEffectUI)
+		colorEffectUI->Stop();
+
+	if (correctCountUI)
+		correctCountUI->Clear();
+
 	if (mode)
 		mode->Clear();
+
+	timer.Reset();
 
 	Renderer::Get().OffDebugMode();
 }
 
 void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 {
+	timer.Tick(deltaTime);
+	if (timer.IsTimeOut())
+	{
+		// 끝내기
+		RequestShowResult(EResult::fail);
+		RequestChangeLevel((int)LevelType::GameResult);
+		return;
+	}
+
 	if (input->IsKeyPressed(VK_ESCAPE))
 	{
 		RequestChangeLevel((int)LevelType::Menu);
@@ -141,8 +192,17 @@ void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 		int idx = GetIndexAtPos(cursor.pos);
 		if (mode->Check(idx))
 		{
-			correctCountUI->AddCount(1);
-			// TODO: 정답 맞춘 효과 주기
+			if(correctCountUI)
+				correctCountUI->AddCount(1);
+			if (colorEffectUI)
+				colorEffectUI->Start();
+
+			// 정답을 다 맞췄을 때
+			if (mode->IsGameClear())
+			{
+				RequestShowResult(EResult::success);
+				RequestChangeLevel((int)LevelType::GameResult);
+			}
 		}
 	}
 
@@ -151,6 +211,11 @@ void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 	if (loadingBarUI)
 	{
 		loadingBarUI->Tick(deltaTime);
+	}
+
+	if (colorEffectUI)
+	{
+		colorEffectUI->Tick(deltaTime);
 	}
 }
 

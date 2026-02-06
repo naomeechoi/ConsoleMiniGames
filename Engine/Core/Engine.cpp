@@ -201,10 +201,11 @@ namespace MinigameEngine
 
 	void Engine::DrawEdge()
 	{
+		Color edgeColor = levelManager->GetLevelEdgeColor();
 		Renderer::Get().SubmitMultiLine(
 			edgeStr.c_str(),
 			Vector2(0, 0),
-			Color::Green
+			edgeColor
 		);
 	}
 }

@@ -21,13 +21,13 @@
     <ClCompile Include="Game\Game.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="PreGameLevel\LoadingLevel.cpp">
+    <ClCompile Include="SystemLevels\LoadingLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="PreGameLevel\StartLevel.cpp">
+    <ClCompile Include="SystemLevels\StartLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="PreGameLevel\MenuLevel.cpp">
+    <ClCompile Include="SystemLevels\MenuLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="SpotTheDifference\SpotTheDifferenceMode.cpp">
@@ -45,18 +45,27 @@
     <ClCompile Include="UI\UICorrectCount.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="UI\UIColorEffect.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemLevels\GameResultLevel.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CardMonte\CardMonteLevel.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Game.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="PreGameLevel\LoadingLevel.h">
+    <ClInclude Include="SystemLevels\LoadingLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="PreGameLevel\StartLevel.h">
+    <ClInclude Include="SystemLevels\StartLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="PreGameLevel\MenuLevel.h">
+    <ClInclude Include="SystemLevels\MenuLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="SpotTheDifference\SpotTheDifferenceMode.h">
@@ -75,6 +84,15 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="UI\UICorrectCount.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UIColorEffect.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemLevels\GameResultLevel.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CardMonte\CardMonteLevel.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

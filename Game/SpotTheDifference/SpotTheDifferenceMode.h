@@ -11,6 +11,7 @@ class SpotTheDifferenceMode : public Mode
 public:
 	SpotTheDifferenceMode();
 	bool Check(int pos);
+	bool IsGameClear();
 	void SetAnswer(std::unordered_set<int>& answer);
 	const std::unordered_set<int>& GetAnswer();
 	const std::unordered_set<int>& GetUserAnswer();

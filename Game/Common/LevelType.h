@@ -7,6 +7,7 @@ enum class LevelType : int
 	Menu,
 	Loading,
 	SpotTheDifference,
-	ThreeCardMonte,
+	CardMonte,
 	Tetris,
+	GameResult,
 };

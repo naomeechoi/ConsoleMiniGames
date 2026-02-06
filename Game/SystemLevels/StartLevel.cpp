@@ -20,6 +20,7 @@ StartLevel::StartLevel()
 
 void StartLevel::OnExit()
 {
+	Level::OnExit();
 	isDrawn = false;
 }
 

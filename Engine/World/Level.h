@@ -3,6 +3,7 @@
 #include <vector>
 #include <optional>
 #include <Math/Vector2.h>
+#include <Util/Color.h>
 
 namespace MinigameEngine
 {
@@ -18,10 +19,10 @@ namespace MinigameEngine
 		Level();
 		virtual ~Level();
 
+		virtual void OnExit();
 		virtual void BeginPlay();
 		virtual void Tick(float deletaTime, Input* input);
 		virtual void Draw();
-		virtual void OnExit() {};
 
 		void AddNewActor(Actor* const newActor);
 
@@ -29,10 +30,14 @@ namespace MinigameEngine
 		void ProcessAddAndDestroyActors();
 
 		void RequestChangeLevel(int levelID);
+		void RequestShowResult(int result);
 
 		std::optional<int> ConsumeRequestedLevel();
+		std::optional<int> ConsumeRequestedShowResult();
 
 		void SetLevelDisplaySize(Vector2 displaySize);
+		Color GetEdgeColor();
+		void SetResult(int result);
 
 	protected:
 		std::vector<Actor*> actors;
@@ -42,7 +47,10 @@ namespace MinigameEngine
 		std::vector<Actor*> addRequestedActors;
 
 		std::optional<int> requestedLevel;
+		std::optional<int> requestedShowResult;
 		Vector2 displaySize;
+		Color edgeColor = Color::Green;
+		int result = -1;
 	};
 }
 

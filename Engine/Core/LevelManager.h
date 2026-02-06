@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include "Math/Vector2.h"
+#include "Util/Color.h"
 
 namespace MinigameEngine
 {
@@ -27,13 +28,14 @@ namespace MinigameEngine
 
 	public:
 		void AddLevel(int id, std::unique_ptr<Level> state);
-		void SetLevel(int id);
+		void SetLevel(int id, int result = -1);
 		Level* GetGameState() const { return current; };
 		void BeginPlay();
 		void Tick(float deltaTime, Input* input);
 		void Draw();
 		void ProcessAddAndDestroyActorsOnLevel();
 		void ChangeLevel();
+		Color GetLevelEdgeColor();
 
 	private:
 		std::unordered_map<int, std::unique_ptr<Level>> levels;
