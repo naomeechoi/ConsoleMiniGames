@@ -179,6 +179,7 @@ namespace MinigameEngine
 		const char* text,
 		const Vector2& position,
 		Color color,
+		Color bgColor,
 		int sortingOrder)
 	{
 		if (!text)
@@ -191,7 +192,7 @@ namespace MinigameEngine
 		while (std::getline(iss, line))
 		{
 			// 빈 줄도 렌더링 가능하도록 line.c_str() 그대로 전달
-			Submit(line.c_str(), { position.x, y }, color, sortingOrder);
+			Submit(line.c_str(), { position.x, y }, color, bgColor, sortingOrder);
 			y++;
 		}
 	}

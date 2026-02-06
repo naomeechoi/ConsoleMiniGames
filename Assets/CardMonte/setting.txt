@@ -1,11 +1,12 @@
 cardCount=5
-playTime=60
+playTime=10
 suffleTime=2
 suffleCount=10
 cardFilpTime=1
 cardWidth=15
 cardHeight=11
 showingTime=2
+message=Let us find the card numbered 
 sprite=---------------
 |             |
 |             |

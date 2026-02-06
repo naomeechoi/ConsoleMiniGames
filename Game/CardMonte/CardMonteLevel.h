@@ -9,6 +9,9 @@
 using namespace MinigameEngine;
 
 class UITop;
+class UILoadingBar;
+class UIMessage;
+class CardMonteMode;
 class CardMonteLevel : public Level
 {
 	using StateFunc = void (CardMonteLevel::*)(float);
@@ -44,8 +47,11 @@ private:
 	Vector2 CenterToTopLeft(const Vector2& center);
 
 private:
+	CardMonteMode* mode = nullptr;
 	// UI
 	UITop* topUI = nullptr;
+	UILoadingBar* loadingBarUI = nullptr;
+	UIMessage* messageUI = nullptr;
 
 private:
 	bool hasBeganPlay = false;
@@ -59,6 +65,7 @@ private:
 	int cardHeight = 11;
 	int cardMidIdx = 0;
 	float showingTime = 2;
+	std::string message;
 
 	std::vector<std::string> cardSprites;
 	std::vector<Card> cards;
@@ -70,11 +77,16 @@ private:
 	void StateShuffle(float deltatime);
 	void StateChoose(float deltatime);
 	void StateGameOver(float deltatime);
+	void StateGameWin(float deltatime);
+	void StateWaitToExit(float deltatime);
 
 
 private:
 	void SetShufflePairs();
 	Vector2 CircularLerp(const Vector2& start, const Vector2& end, float t, bool topArc = true);
+	void FlipCard(bool isOpen);
+	std::vector<int> GetCurCardsOrder();
+	void HandleChooseInput(Input* input);
 
 private:
 	StateFunc curState = nullptr;
@@ -84,6 +96,9 @@ private:
 	int spriteIdx = 0;
 	int currentShuffleIdx = 0;
 
+	int selectedIdx = -1;
+
+	bool isSuccess = false;
 
 private:
 	std::vector<ShufflePair> shufflePairs;

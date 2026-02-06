@@ -1,9 +1,12 @@
 #define NOMINMAX
 #include "CardMonteLevel.h"
+#include "CardMonteMode.h"
 #include "Render/Renderer.h"
 #include "System/Input.h"
 #include "Common/LevelType.h"
 #include "UI/UITop.h"
+#include "UI/UILoadingBar.h"
+#include "UI/UIMessage.h"
 #include "Util/Random.h"
 #include <iostream>
 #include <fstream>
@@ -32,6 +35,24 @@ CardMonteLevel::~CardMonteLevel()
         delete topUI;
         topUI = nullptr;
     }
+
+    if (loadingBarUI)
+    {
+        delete loadingBarUI;
+        loadingBarUI = nullptr;
+    }
+
+    if (messageUI)
+    {
+        delete messageUI;
+        messageUI = nullptr;
+    }
+
+    if (mode)
+    {
+        delete mode;
+        mode = nullptr;
+    }
 }
 
 void CardMonteLevel::BeginPlay()
@@ -44,10 +65,36 @@ void CardMonteLevel::BeginPlay()
     CardSetting();
     SetShufflePairs();
 
+    if (!mode)
+        mode = new CardMonteMode();
+
     if (!topUI)
         topUI = new UITop(displaySize.x, Vector2(3, 2), "Card Monte");
 
+    if (!loadingBarUI)
+        loadingBarUI = new UILoadingBar(Vector2(3, displaySize.y - 3), displaySize.x - 5, playTime, '#');
 
+    if (!messageUI)
+        messageUI = new UIMessage();
+
+    if (!mode
+        || !topUI
+        || !loadingBarUI
+        || !messageUI)
+    {
+        // 게임 시작 못하는 상황
+        RequestChangeLevel((int)LevelType::Menu);
+        return;
+    }
+
+    // CardMonteLevel::BeginPlay() 내부
+    int answerCardIdx = Random::Random(0, (int)cards.size() - 1);
+    int answer = cards[answerCardIdx].num;
+    mode->SetAnswer(answer);
+
+    // 멤버 변수인 message를 직접 수정하지 말고 지역 변수 생성
+    std::string finalMessage = message + std::to_string(answer);
+    messageUI->Start(displaySize.x, Vector2(3, displaySize.y - 5), finalMessage, " ");
     // 시작
     ChangeState(&CardMonteLevel::StateShowing, showingTime);
 }
@@ -68,7 +115,16 @@ void CardMonteLevel::Tick(float deltaTime, Input* input)
     }
 
     if (curState)
+    {
         (this->*curState)(deltaTime);
+        if (curState == &CardMonteLevel::StateChoose)
+            HandleChooseInput(input);
+    }
+
+    if (loadingBarUI)
+    {
+        loadingBarUI->Tick(deltaTime);
+    }
 }
 
 void CardMonteLevel::Draw()
@@ -78,17 +134,35 @@ void CardMonteLevel::Draw()
     if (topUI)
         topUI->Draw();
 
+    if (loadingBarUI)
+        loadingBarUI->Draw();
+
+    if (messageUI)
+        messageUI->Draw();
+        
     for (int i = 0; i < cardCount; i++)
     {
         std::string cardSprite = cardSprites[spriteIdx];
 
-        if(spriteIdx == 0)
+        if (spriteIdx == 0)
             cardSprite[cardMidIdx] = '0' + cards[i].num;
+
+        Color color = (i == selectedIdx) ? Color::LightYellow : Color::Green;
+
+        Color bgColor = Color::Black;
+        // 디버깅용으로 빨간색 표시
+        if (curState == &CardMonteLevel::StateChoose)
+        {
+            if ((mode->Check(cards[i].num)))
+                bgColor = Color::Red;
+        }
 
         Renderer::Get().SubmitMultiLine(
             cardSprite.c_str(),
             cards[i].pos,
-            Color::Green
+            color,
+            bgColor,
+            0
         );
     }
 }
@@ -134,6 +208,9 @@ void CardMonteLevel::LoadSetting()
         }
         else if (line.find("showingTime") != std::string::npos) {
             showingTime = stof(line.substr(line.find('=') + 1));
+        }
+        else if (line.find("message") != std::string::npos) {
+            message = line.substr(line.find('=') + 1);
         }
         // 이미지 시작
         else if (line.find("sprite") != std::string::npos) {
@@ -185,6 +262,21 @@ void CardMonteLevel::Clear()
     currentShuffleIdx = 0;
     stateTimer.Reset();
     curState = nullptr;
+    selectedIdx = -1;
+    isSuccess = false;
+
+
+    if (mode)
+        mode->Clear();
+
+    if (loadingBarUI)
+    {
+        loadingBarUI->Stop();
+        loadingBarUI->Clear();
+    }
+
+    if (messageUI)
+        messageUI->Clear();
 }
 
 Vector2 CardMonteLevel::GetCenter(const Vector2& pos)
@@ -222,15 +314,68 @@ void CardMonteLevel::StateFilp(float deltatime)
 {
     stateTimer.Tick(deltatime);
     
-    float t = stateTimer.GetRatio();
-    int maxIdx = cardSprites.size() - 1;
-    int flipIdx = (int)(t * maxIdx);
-    flipIdx = std::clamp(flipIdx, 0, maxIdx);
-    spriteIdx = flipIdx;
+    FlipCard(false);
     if (stateTimer.IsTimeOut())
     {
-        spriteIdx = maxIdx;
+        spriteIdx = cardSprites.size() - 1;
         ChangeState(&CardMonteLevel::StateShuffle, cardFilpTime);
+    }
+}
+
+void CardMonteLevel::FlipCard(bool isOpen)
+{
+
+    float t = stateTimer.GetRatio();
+    int maxIdx = cardSprites.size() - 1;
+    int flipIdx = isOpen ? (int)((1-t) * maxIdx) : (int)(t * maxIdx);
+    flipIdx = std::clamp(flipIdx, 0, maxIdx);
+    spriteIdx = flipIdx;
+}
+
+std::vector<int> CardMonteLevel::GetCurCardsOrder()
+{
+    std::vector<int> indices(cards.size());
+    for (int i = 0; i < cards.size(); i++)
+        indices[i] = i;
+
+    std::sort(indices.begin(), indices.end(),
+        [&](int a, int b)
+        {
+            return cards[a].originPos.x < cards[b].originPos.x;
+        });
+
+    return indices;
+}
+
+void CardMonteLevel::HandleChooseInput(Input* input)
+{
+    auto order = GetCurCardsOrder();
+
+    auto it = std::find(order.begin(), order.end(), selectedIdx);
+    if (it == order.end())
+        return;
+
+    int idx = (int)std::distance(order.begin(), it);
+
+    if (input->IsKeyPressed(VK_LEFT) && idx > 0)
+        selectedIdx = order[idx - 1];
+
+    if (input->IsKeyPressed(VK_RIGHT) && idx < order.size() - 1)
+        selectedIdx = order[idx + 1];
+
+    if (input->IsKeyPressed(VK_SPACE))
+    {
+        int chosenNum = cards[selectedIdx].num;
+        if (mode->Check(chosenNum))
+        {
+            ChangeState(&CardMonteLevel::StateGameWin, cardFilpTime);
+        }
+        else
+        {
+            ChangeState(&CardMonteLevel::StateGameOver, cardFilpTime);
+        }
+        if (loadingBarUI)
+            loadingBarUI->Stop();
     }
 }
 
@@ -270,9 +415,16 @@ void CardMonteLevel::StateShuffle(float deltatime)
 
         currentShuffleIdx++;
         if (currentShuffleIdx < shufflePairs.size())
+        {
             stateTimer.Reset();
+        }
         else
+        {
             ChangeState(&CardMonteLevel::StateChoose, playTime);
+            if(loadingBarUI)
+                loadingBarUI->Start();
+            selectedIdx = Random::Random(0, (int)cards.size() - 1);
+        }
     }
 }
 
@@ -281,13 +433,49 @@ void CardMonteLevel::StateChoose(float deltatime)
     stateTimer.Tick(deltatime);
     //보여주는 로직
     if (stateTimer.IsTimeOut())
-        ChangeState(&CardMonteLevel::StateGameOver, playTime);
+        ChangeState(&CardMonteLevel::StateGameOver, cardFilpTime);
 }
 
 void CardMonteLevel::StateGameOver(float deltatime)
 {
     // 게임 끝내는 로직
+    stateTimer.Tick(deltatime);
+
+    FlipCard(true);
+    if (stateTimer.IsTimeOut())
+    {
+        spriteIdx = 0;
+        isSuccess = false;
+        ChangeState(&CardMonteLevel::StateWaitToExit, showingTime);
+    }
 }
+
+void CardMonteLevel::StateGameWin(float deltatime)
+{
+    // 게임 끝내는 로직
+    stateTimer.Tick(deltatime);
+
+    FlipCard(true);
+    if (stateTimer.IsTimeOut())
+    {
+        spriteIdx = 0;
+        isSuccess = true;
+        ChangeState(&CardMonteLevel::StateWaitToExit, showingTime);
+    }
+}
+
+void CardMonteLevel::StateWaitToExit(float deltatime)
+{
+    // 게임 끝내는 로직
+    stateTimer.Tick(deltatime);
+
+    if (stateTimer.IsTimeOut())
+    {
+        RequestShowResult(isSuccess ? EResult::success : EResult::fail);
+        RequestChangeLevel((int)LevelType::GameResult);
+    }
+}
+
 
 void CardMonteLevel::SetShufflePairs()
 {

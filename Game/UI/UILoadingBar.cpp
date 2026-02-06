@@ -1,6 +1,8 @@
+#define NOMINMAX
 #include "UILoadingBar.h"
 #include "Render/Renderer.h"
 #include "UIColorEffect.h"
+#include <algorithm>
 
 UILoadingBar::UILoadingBar(Vector2 position, float maxWidth, float totalTime, char shapeChar)
 	:position(position), maxWidth(maxWidth), totalTime(totalTime), shapeChar(shapeChar)
@@ -9,22 +11,32 @@ UILoadingBar::UILoadingBar(Vector2 position, float maxWidth, float totalTime, ch
 
 void UILoadingBar::Tick(float deltaTime)
 {
-	if (!isMove)
-		return;
+    if (!isMove)
+        return;
 
-	timer.Tick(deltaTime);
-	if (!timer.IsTimeOut())
-		return;
+    timer.Tick(deltaTime);
+    if (!timer.IsTimeOut())
+        return;
 
-	charDrawAccum += maxWidth / totalTime;
-	int toDraw = (int)charDrawAccum;
-	charDrawAccum -= toDraw;
+    charDrawAccum += maxWidth / totalTime;
+    int toDraw = (int)charDrawAccum;
+    charDrawAccum -= toDraw;
 
-	if(toDraw > 0)
-		loadingBarStr += std::string(toDraw, shapeChar);
+    // 이미 다 찼으면 더 이상 그리지 않음
+    int currentWidth = (int)loadingBarStr.size();
+    int remainWidth = maxWidth - currentWidth;
 
-	timer.Reset();
+    if (remainWidth <= 0)
+        return;
+
+    toDraw = std::min(toDraw, remainWidth);
+
+    if (toDraw > 0)
+        loadingBarStr += std::string(toDraw, shapeChar);
+
+    timer.Reset();
 }
+
 
 void UILoadingBar::Draw()
 {

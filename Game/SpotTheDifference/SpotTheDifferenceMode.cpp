@@ -22,7 +22,6 @@ const std::unordered_set<int>& SpotTheDifferenceMode::GetUserAnswer()
 	return userAnswerSet;
 }
 
-
 bool SpotTheDifferenceMode::Check(int pos)
 {
 	if (!answerSet.count(pos))

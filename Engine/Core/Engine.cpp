@@ -9,6 +9,7 @@
 #include <sstream>
 #include <Windows.h>
 #include "Util/LayoutCalculator.h"
+#include "Util/Random.h"
 #include "Math/Vector2.h"
 
 namespace MinigameEngine
@@ -28,6 +29,8 @@ namespace MinigameEngine
 		Console::SetCursorVisible(false);
 
 		layoutCalculator = new LayoutCalculator();
+
+		Random::SetRandomSeed();
 	}
 
 	Engine::~Engine()

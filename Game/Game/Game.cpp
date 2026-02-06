@@ -25,7 +25,7 @@ Game::Game()
 
 	onMenu.push_back(std::make_pair((int)LevelType::Start, "Start Screen"));
 	onMenu.push_back(std::make_pair((int)LevelType::SpotTheDifference, "Spot The Difference"));
-	onMenu.push_back(std::make_pair((int)LevelType::CardMonte, "CardMonte"));
+	onMenu.push_back(std::make_pair((int)LevelType::CardMonte, "Card Monte"));
 	onMenu.push_back(std::make_pair((int)LevelType::Quit, "Quit"));
 }
 
