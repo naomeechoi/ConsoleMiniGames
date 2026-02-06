@@ -161,6 +161,8 @@
     <ClCompile Include="PreGameLevel\MenuLevel.cpp" />
     <ClCompile Include="SpotTheDifference\SpotTheDifferenceMode.cpp" />
     <ClCompile Include="SpotTheDifference\SpotTheDifferenceLevel.cpp" />
+    <ClCompile Include="UI\UICorrectCount.cpp" />
+    <ClCompile Include="UI\UILoadingBar.cpp" />
     <ClCompile Include="UI\UITop.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +173,8 @@
     <ClInclude Include="PreGameLevel\MenuLevel.h" />
     <ClInclude Include="SpotTheDifference\SpotTheDifferenceMode.h" />
     <ClInclude Include="SpotTheDifference\SpotTheDifferenceLevel.h" />
+    <ClInclude Include="UI\UICorrectCount.h" />
+    <ClInclude Include="UI\UILoadingBar.h" />
     <ClInclude Include="UI\UITop.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

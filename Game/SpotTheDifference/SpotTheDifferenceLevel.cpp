@@ -3,6 +3,8 @@
 #include "SpotTheDifferenceMode.h"
 #include "Util/Console.h"
 #include "UI/UITop.h"
+#include "UI/UILoadingBar.h"
+#include "UI/UICorrectCount.h"
 #include "Math/Vector2.h"
 #include "System/Input.h"
 #include "Common/LevelType.h"
@@ -65,6 +67,18 @@ SpotTheDifferenceLevel::~SpotTheDifferenceLevel()
 		topUI = nullptr;
 	}
 
+	if (loadingBarUI)
+	{
+		delete loadingBarUI;
+		loadingBarUI = nullptr;
+	}
+
+	if (correctCountUI)
+	{
+		delete correctCountUI;
+		correctCountUI = nullptr;
+	}
+
 	if (mode)
 	{
 		delete mode;
@@ -77,9 +91,6 @@ void SpotTheDifferenceLevel::BeginPlay()
 	if (hasBeganPlay)
 		return;
 
-	if (!topUI)
-		topUI = new UITop(displaySize.x, Vector2(3, 2), "Spot The Difference");
-
 	if (!mode)
 		mode = new SpotTheDifferenceMode();
 
@@ -87,11 +98,29 @@ void SpotTheDifferenceLevel::BeginPlay()
 	MakeDifferences(); // 틀린 곳 만들어주고 모드에 전송
 
 	hasBeganPlay = true;
+
+	if (!topUI)
+		topUI = new UITop(displaySize.x, Vector2(3, 2), "Spot The Difference");
+
+	if (!loadingBarUI)
+		loadingBarUI = new UILoadingBar(Vector2(3, paintSize.y + 6), ((float)displaySize.x / 4.0f) * 3.0f, 120.0f, '#');
+
+	if (!correctCountUI)
+		correctCountUI = new UICorrectCount(paintSize.y + 6, displaySize.x, 20); // TODO: 하드 코딩 수정 필요
+
+	// 로딩바 시작
+	loadingBarUI->Start();
 }
 
 void SpotTheDifferenceLevel::OnExit()
 {
 	hasBeganPlay = false;
+
+	if (loadingBarUI)
+	{
+		loadingBarUI->Stop();
+		loadingBarUI->Clear();
+	}
 
 	if (mode)
 		mode->Clear();
@@ -106,7 +135,23 @@ void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 		RequestChangeLevel((int)LevelType::Menu);
 	}
 
+	if (input->IsKeyPressed(VK_SPACE) && mode)
+	{
+		// 정답 체크
+		int idx = GetIndexAtPos(cursor.pos);
+		if (mode->Check(idx))
+		{
+			correctCountUI->AddCount(1);
+			// TODO: 정답 맞춘 효과 주기
+		}
+	}
+
 	cursor.Tick(deltaTime, input);
+	
+	if (loadingBarUI)
+	{
+		loadingBarUI->Tick(deltaTime);
+	}
 }
 
 void SpotTheDifferenceLevel::Draw()
@@ -116,10 +161,16 @@ void SpotTheDifferenceLevel::Draw()
 	if (topUI)
 		topUI->Draw();
 
-	DrawPaint();
-	char ch = GetCharAtCursor();
+	if (loadingBarUI)
+		loadingBarUI->Draw();
 
-	// 임시 문자열이 아닌 고정 버퍼 사용
+	if (correctCountUI)
+		correctCountUI->Draw();
+
+	DrawPaint();
+
+	// 커서 위치 배경 바꾸기
+	char ch = GetCharAtCursor();
 	char cursorChar[2] = { ch, '\0' };
 
 	Renderer::Get().Submit(
@@ -129,6 +180,38 @@ void SpotTheDifferenceLevel::Draw()
 		Color::White,
 		999
 	);
+
+	// 맞춘 정답들 표시해주기
+	if (mode)
+	{
+		const int totalWidth = paintSize.x * 2 + 6;
+		Vector2 paint1StartPos((displaySize.x - totalWidth) / 2, 4);
+
+		for (int idx : mode->GetUserAnswer())
+		{
+			//Vector2 topLeft(cursor.pos.x - cursor.topLeft.x, cursor.pos.y - cursor.topLeft.y);
+			Vector2 pos = GetPosAtIndex(idx, cursor.topLeft);
+
+			char oneCharStr[2] = { paintStr2[idx], '\0' };
+			Renderer::Get().Submit(
+				oneCharStr,
+				pos,
+				Color::Green,
+				Color::Yellow,
+				999
+			);
+
+			pos = GetPosAtIndex(idx, paint1StartPos);
+			char oneCharStr2[2] = { paintStr[idx], '\0' };
+			Renderer::Get().Submit(
+				oneCharStr2,
+				pos,
+				Color::Green,
+				Color::Yellow,
+				999
+			);
+		}
+	}
 }
 
 void SpotTheDifferenceLevel::LoadText()
@@ -191,7 +274,8 @@ void SpotTheDifferenceLevel::MakeDifferences()
 	const int rightStartX = startX + paintSize.x + GAP;
 	const int startY = 4;
 
-	std::unordered_set<Vector2> answerSet;
+	std::unordered_set<Vector2> debugSet;
+	std::unordered_set<int> answerSet;
 
 	for (int difference : differencesSet)
 	{
@@ -216,11 +300,12 @@ void SpotTheDifferenceLevel::MakeDifferences()
 		}
 
 		// 화면 좌표로 변환
-		answerSet.insert({ x + rightStartX, y + startY });
+		debugSet.insert({ x + rightStartX, y + startY });
+		answerSet.insert(difference);
 	}
 
 	cursor.Init(Vector2(rightStartX, startY), paintSize);
-	Renderer::Get().SetDebugMode(answerSet);
+	Renderer::Get().SetDebugMode(debugSet);
 
 	if (mode)
 		mode->SetAnswer(answerSet);
@@ -272,4 +357,46 @@ char SpotTheDifferenceLevel::GetCharAtCursor() const
 
 	idx += localX;
 	return paintStr2[idx];
+}
+
+int SpotTheDifferenceLevel::GetIndexAtPos(Vector2 pos) const
+{
+	int localX = pos.x - cursor.topLeft.x;
+	int localY = pos.y - cursor.topLeft.y;
+
+	if (localY < 0 || localY >= (int)lineLengths.size())
+		return -1;
+
+	if (localX < 0 || localX >= lineLengths[localY])
+		return -1;
+
+	int idx = 0;
+	for (int i = 0; i < localY; i++)
+		idx += lineLengths[i] + 1;
+
+	return idx + localX;
+}
+
+Vector2 SpotTheDifferenceLevel::GetPosAtIndex(int idx, Vector2 topLeft) const
+{
+	int x = 0;
+	int y = 0;
+
+	for (int i = 0; i < idx; i++)
+	{
+		if (paintStr[i] == '\n')
+		{
+			y++;
+			x = 0;
+		}
+		else
+		{
+			x++;
+		}
+	}
+
+	return Vector2(
+		topLeft.x + x,
+		topLeft.y + y
+	);
 }

@@ -9,6 +9,8 @@
 using namespace MinigameEngine;
 class SpotTheDifferenceMode;
 class UITop;
+class UILoadingBar;
+class UICorrectCount;
 
 class SpotTheDifferenceLevel : public Level
 {
@@ -36,11 +38,20 @@ private:
 	void MakeDifferences();
 	void DrawPaint();
 	char GetCharAtCursor() const;
+	int GetIndexAtPos(Vector2 pos) const;
+	Vector2 GetPosAtIndex(int idx, Vector2 topLeft) const;
 
 private:
-	SpotTheDifferenceMode* mode = nullptr;
-	UITop* topUI = nullptr;
 	bool hasBeganPlay = false;
+
+	SpotTheDifferenceMode* mode = nullptr;
+	
+	// UI
+	UITop* topUI = nullptr;
+	UILoadingBar* loadingBarUI = nullptr;
+	UICorrectCount* correctCountUI = nullptr;
+
+	// Paint
 	Vector2 paintSize;
 	std::string paintStr;
 	std::string paintStr2;

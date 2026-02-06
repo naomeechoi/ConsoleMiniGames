@@ -5,20 +5,34 @@ SpotTheDifferenceMode::SpotTheDifferenceMode()
 {
 }
 
-void SpotTheDifferenceMode::SetAnswer(std::unordered_set<Vector2>& answer)
+void SpotTheDifferenceMode::SetAnswer(std::unordered_set<int>& answer)
 {
 	answerSet.insert(answer.begin(), answer.end());
 }
 
-const std::unordered_set<Vector2>& SpotTheDifferenceMode::GetAnswer()
+const std::unordered_set<int>& SpotTheDifferenceMode::GetAnswer()
 {
 	// TODO: 여기에 return 문을 삽입합니다.
 	return answerSet;
 }
 
-bool SpotTheDifferenceMode::Check(Vector2 pos)
+const std::unordered_set<int>& SpotTheDifferenceMode::GetUserAnswer()
 {
-	return answerSet.count(pos);
+	// TODO: 여기에 return 문을 삽입합니다.
+	return userAnswerSet;
+}
+
+
+bool SpotTheDifferenceMode::Check(int pos)
+{
+	if (!answerSet.count(pos))
+		return false;
+
+	if (userAnswerSet.count(pos))
+		return false;
+
+	userAnswerSet.insert(pos);
+	return true;
 }
 
 void SpotTheDifferenceMode::Clear()

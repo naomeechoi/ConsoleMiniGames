@@ -10,12 +10,14 @@ class SpotTheDifferenceMode : public Mode
 {
 public:
 	SpotTheDifferenceMode();
-	bool Check(Vector2 pos);
-	void SetAnswer(std::unordered_set<Vector2>& answer);
-	const std::unordered_set<Vector2>& GetAnswer();
+	bool Check(int pos);
+	void SetAnswer(std::unordered_set<int>& answer);
+	const std::unordered_set<int>& GetAnswer();
+	const std::unordered_set<int>& GetUserAnswer();
 	void Clear();
 
 private:
-	std::unordered_set<Vector2> answerSet;
+	std::unordered_set<int> answerSet;
+	std::unordered_set<int> userAnswerSet;
 };
 
