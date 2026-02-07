@@ -6,6 +6,7 @@
 #include "SystemLevels/GameResultLevel.h"
 #include "SpotTheDifference/SpotTheDifferenceLevel.h"
 #include "CardMonte/CardMonteLevel.h"
+#include "Tetris/TetrisLevel.h"
 #include "Common/LevelType.h"
 
 Game* Game::instance = nullptr;
@@ -19,6 +20,7 @@ Game::Game()
 	GetLevelManager()->AddLevel((int)LevelType::Loading, std::make_unique<LoadingLevel>());
 	GetLevelManager()->AddLevel((int)LevelType::SpotTheDifference, std::make_unique<SpotTheDifferenceLevel>());
 	GetLevelManager()->AddLevel((int)LevelType::CardMonte, std::make_unique<CardMonteLevel>());
+	GetLevelManager()->AddLevel((int)LevelType::Tetris, std::make_unique<TetrisLevel>());
 	GetLevelManager()->AddLevel((int)LevelType::GameResult, std::make_unique<GameResultLevel>());
 
 	GetLevelManager()->SetLevel((int)LevelType::Start);
@@ -26,6 +28,7 @@ Game::Game()
 	onMenu.push_back(std::make_pair((int)LevelType::Start, "Start Screen"));
 	onMenu.push_back(std::make_pair((int)LevelType::SpotTheDifference, "Spot The Difference"));
 	onMenu.push_back(std::make_pair((int)LevelType::CardMonte, "Card Monte"));
+	onMenu.push_back(std::make_pair((int)LevelType::Tetris, "Tetris"));
 	onMenu.push_back(std::make_pair((int)LevelType::Quit, "Quit"));
 }
 

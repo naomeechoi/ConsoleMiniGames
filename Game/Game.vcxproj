@@ -164,6 +164,10 @@
     <ClCompile Include="SystemLevels\MenuLevel.cpp" />
     <ClCompile Include="SpotTheDifference\SpotTheDifferenceMode.cpp" />
     <ClCompile Include="SpotTheDifference\SpotTheDifferenceLevel.cpp" />
+    <ClCompile Include="Tetris\TetrisBoard.cpp" />
+    <ClCompile Include="Tetris\TetrisPlayer.cpp" />
+    <ClCompile Include="Tetris\TetrisLevel.cpp" />
+    <ClCompile Include="Tetris\TetrisPieces.cpp" />
     <ClCompile Include="UI\UIColorEffect.cpp" />
     <ClCompile Include="UI\UICorrectCount.cpp" />
     <ClCompile Include="UI\UILoadingBar.cpp" />
@@ -181,6 +185,10 @@
     <ClInclude Include="SystemLevels\MenuLevel.h" />
     <ClInclude Include="SpotTheDifference\SpotTheDifferenceMode.h" />
     <ClInclude Include="SpotTheDifference\SpotTheDifferenceLevel.h" />
+    <ClInclude Include="Tetris\TetrisBoard.h" />
+    <ClInclude Include="Tetris\TetrisPlayer.h" />
+    <ClInclude Include="Tetris\TetrisLevel.h" />
+    <ClInclude Include="Tetris\TetrisPieces.h" />
     <ClInclude Include="UI\UIColorEffect.h" />
     <ClInclude Include="UI\UICorrectCount.h" />
     <ClInclude Include="UI\UILoadingBar.h" />

@@ -7,16 +7,18 @@ namespace MinigameEngine
 {
 	// 전방 선언
 	class Level;
+	class Input;
 	class NAOMI_API Actor : public RTTI
 	{
 		// RTTI 코드 추가
 		RTTI_DECLARATIONS(Actor, RTTI)
 	public:
-		Actor(const char* image = " ", const Vector2& position = Vector2::Zero, Color color = Color::White);
+		Actor();
+		Actor(const char* image, const Vector2& position, Color color);
 		virtual ~Actor();
 
 		virtual void BeginPlay();
-		virtual void Tick(float deletaTime);
+		virtual void Tick(float deletaTime, Input* input);
 		virtual void Draw();
 
 		// 위치 변경 및 읽기 함수
@@ -33,6 +35,8 @@ namespace MinigameEngine
 
 		inline int GetSortingOrder() const { return sortingOrder; }
 
+		void SetProperties(const char* image, const Vector2& position, Color color, Color bgColor);
+
 	protected:
 		bool hasBeganPlay = false;
 		bool isActive = true;
@@ -42,6 +46,7 @@ namespace MinigameEngine
 		int width = 0;
 
 		Color color = Color::White;
+		Color bgColor = Color::Black;
 
 		// 오너십
 		Level* owner = nullptr;

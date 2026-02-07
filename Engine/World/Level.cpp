@@ -43,7 +43,7 @@ namespace MinigameEngine
 	{
 		for (Actor* actor : actors)
 		{
-			actor->Tick(deletaTime);
+			actor->Tick(deletaTime, input);
 		}
 	}
 
