@@ -1,15 +1,103 @@
 #include "TetrisBoard.h"
+#include "Math/Vector2.h"
+#include "Render/Renderer.h"
 
-TetrisBoard::TetrisBoard()
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+
+using namespace MinigameEngine;
+
+TetrisBoard::TetrisBoard(Vector2 startPos)
+    : startPos(startPos)
 {
+    LoadEdgeTxt();
     Clear();
 }
 
 void TetrisBoard::Clear()
 {
+    isClearing = false;
+    clearingLines.clear();
+
     for (int y = 0; y < BOARD_HEIGHT; ++y)
+    {
         for (int x = 0; x < BOARD_WIDTH; ++x)
-            grid[y][x] = -1;
+        {
+            grid[y][x].type = PieceType::EMPTY;
+            grid[y][x].flashFrame = 0.0f;
+        }
+        lineFlashTimers[y] = 0.0f;
+    }
+}
+
+void TetrisBoard::Draw()
+{
+    Vector2 edgePos{ startPos.x - 1, startPos.y - 1 };
+
+    Renderer::Get().SubmitMultiLine(
+        edge.c_str(),
+        edgePos,
+        Color::Green
+    );
+
+    for (int y = 0; y < BOARD_HEIGHT; ++y)
+    {
+        for (int x = 0; x < BOARD_WIDTH; ++x)
+        {
+            if (grid[y][x].type == PieceType::EMPTY)
+                continue;
+
+            const auto& piece = g_PieceInfo[(int)grid[y][x].type];
+
+            Vector2 pos{
+                startPos.x + x * brickXSize,
+                startPos.y + y * brickYSize
+            };
+
+            Color drawColor = piece.color;
+
+            if (grid[y][x].flashFrame > 0.0f &&
+                fmod(grid[y][x].flashFrame, 0.1f) < 0.05f)
+            {
+                drawColor = Color::White;
+            }
+
+            if (lineFlashTimers[y] > 0.0f &&
+                fmod(lineFlashTimers[y], 0.1f) < 0.05f)
+            {
+                drawColor = Color::Black;
+            }
+
+            Renderer::Get().SubmitMultiLine(
+                brick,
+                pos,
+                drawColor,
+                drawColor,
+                0
+            );
+        }
+    }
+}
+
+void TetrisBoard::Tick(float deltaTime)
+{
+    for (int y = 0; y < BOARD_HEIGHT; ++y)
+    {
+        for (int x = 0; x < BOARD_WIDTH; ++x)
+        {
+            if (grid[y][x].flashFrame > 0.0f)
+            {
+                grid[y][x].flashFrame -= deltaTime;
+                if (grid[y][x].flashFrame < 0.0f)
+                    grid[y][x].flashFrame = 0.0f;
+            }
+        }
+    }
+
+    ClearLines(deltaTime);
 }
 
 bool TetrisBoard::IsInside(int x, int y) const
@@ -20,88 +108,123 @@ bool TetrisBoard::IsInside(int x, int y) const
 
 bool TetrisBoard::IsOccupied(int x, int y) const
 {
-    return grid[y][x] != -1;
+    return grid[y][x].type != PieceType::EMPTY;
 }
 
-bool TetrisBoard::IsCellEmpty(int x, int y) const
-{
-    return grid[y][x] == -1;
-}
-
-PieceType TetrisBoard::GetCell(int x, int y) const
-{
-    return (PieceType)grid[y][x];
-}
-
-bool TetrisBoard::CanPlace(PieceType type,
-    int rotation,
-    int offsetX,
-    int offsetY) const
+bool TetrisBoard::CanPlace(PieceType type, int rotation, int ox, int oy) const
 {
     const auto& piece = g_PieceInfo[(int)type];
 
     for (int i = 0; i < BLOCK_COUNT; ++i)
     {
-        int x = offsetX + piece.blocks[rotation][i].x;
-        int y = offsetY + piece.blocks[rotation][i].y;
+        int x = ox + piece.blocks[rotation][i].x;
+        int y = oy + piece.blocks[rotation][i].y;
 
-        if (!IsInside(x, y))
-            return false;
-
-        if (IsOccupied(x, y))
+        if (!IsInside(x, y) || IsOccupied(x, y))
             return false;
     }
-
     return true;
 }
 
-void TetrisBoard::PlacePiece(PieceType type,
-    int rotation,
-    int offsetX,
-    int offsetY)
+void TetrisBoard::PlacePiece(PieceType type, int rotation, int ox, int oy)
 {
     const auto& piece = g_PieceInfo[(int)type];
 
     for (int i = 0; i < BLOCK_COUNT; ++i)
     {
-        int x = offsetX + piece.blocks[rotation][i].x;
-        int y = offsetY + piece.blocks[rotation][i].y;
+        int x = ox + piece.blocks[rotation][i].x;
+        int y = oy + piece.blocks[rotation][i].y;
 
-        grid[y][x] = (int)type;
+        grid[y][x].type = type;
+        grid[y][x].flashFrame = 0.3f;
     }
 }
 
-int TetrisBoard::ClearLines()
+void TetrisBoard::ClearLines(float deltaTime)
 {
-    int cleared = 0;
-
-    for (int y = BOARD_HEIGHT - 1; y >= 0; --y)
+    if (!isClearing)
     {
-        bool full = true;
+        clearingLines.clear();
 
-        for (int x = 0; x < BOARD_WIDTH; ++x)
+        for (int y = 0; y < BOARD_HEIGHT; ++y)
         {
-            if (grid[y][x] == -1)
+            bool full = true;
+            for (int x = 0; x < BOARD_WIDTH; ++x)
             {
-                full = false;
-                break;
+                if (grid[y][x].type == PieceType::EMPTY)
+                {
+                    full = false;
+                    break;
+                }
+            }
+
+            if (full)
+            {
+                clearingLines.push_back(y);
+                lineFlashTimers[y] = 0.1f;
+
+                for (int x = 0; x < BOARD_WIDTH; ++x)
+                {
+                    grid[y][x].flashFrame = 0.0f;
+                }
             }
         }
 
-        if (full)
-        {
-            ++cleared;
+        if (!clearingLines.empty())
+            isClearing = true;
 
-            for (int yy = y; yy > 0; --yy)
-                for (int x = 0; x < BOARD_WIDTH; ++x)
-                    grid[yy][x] = grid[yy - 1][x];
-
-            for (int x = 0; x < BOARD_WIDTH; ++x)
-                grid[0][x] = -1;
-
-            ++y;
-        }
+        return;
     }
 
-    return cleared;
+    bool allDone = true;
+    for (int y : clearingLines)
+    {
+        lineFlashTimers[y] -= deltaTime;
+        if (lineFlashTimers[y] > 0.0f)
+            allDone = false;
+    }
+
+    if (!allDone)
+        return;
+
+    int dst = BOARD_HEIGHT - 1;
+
+    for (int src = BOARD_HEIGHT - 1; src >= 0; --src)
+    {
+        if (std::find(clearingLines.begin(), clearingLines.end(), src) != clearingLines.end())
+            continue;
+
+        if (dst != src)
+            grid[dst] = grid[src];
+
+        dst--;
+    }
+
+    for (int y = dst; y >= 0; --y)
+    {
+        for (int x = 0; x < BOARD_WIDTH; ++x)
+        {
+            grid[y][x].type = PieceType::EMPTY;
+            grid[y][x].flashFrame = 0.0f;
+        }
+        lineFlashTimers[y] = 0.0f;
+    }
+
+    isClearing = false;
+    clearingLines.clear();
+}
+
+void TetrisBoard::LoadEdgeTxt()
+{
+    std::ifstream file("../Assets/Tetris/BoardEdge.txt");
+    if (!file.is_open())
+    {
+        std::cout << "Fail to open BoardEdge.txt\n";
+        __debugbreak();
+        return;
+    }
+
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    edge = buffer.str();
 }

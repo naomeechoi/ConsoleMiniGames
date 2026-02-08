@@ -72,6 +72,9 @@
     <ClCompile Include="Tetris\TetrisPieces.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Tetris\TetrisRotationSystem.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Game.h">
@@ -129,6 +132,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Tetris\TetrisPieces.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Tetris\TetrisRotationSystem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

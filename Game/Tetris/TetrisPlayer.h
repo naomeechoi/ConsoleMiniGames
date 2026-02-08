@@ -1,33 +1,34 @@
 #pragma once
-#include "World/Actor.h"
 #include "System/Timer.h"
+#include "System/Input.h"
 #include "TetrisPieces.h"
 
-using namespace MinigameEngine;
-
-class TetrisBoard;
-class TetrisPlayer : public Actor
+class TetrisPlayer
 {
 public:
-	TetrisPlayer();
+	TetrisPlayer(MinigameEngine::Vector2 worldStartPos);
 	~TetrisPlayer();
 
-    virtual void Tick(float deltaTime, Input* input) override;
+    void BeginPlay();
+    void Tick(float deltaTime, MinigameEngine::Input* input);
+    void Draw();
+    void Clear();
 
     void Spawn(PieceType type);
 
-    void MoveLeft(const TetrisBoard& board);
-    void MoveRight(const TetrisBoard& board);
-    bool MoveDown(const TetrisBoard& board);
+    void MoveHorizontal(bool isLeft);
+    void MoveDown();
 
-    void RotateCW(const TetrisBoard& board);
-    void HardDrop(const TetrisBoard& board);
+    void Rotate();
 
 
     PieceType GetPieceType() const { return type; }
     int GetRotation() const { return rotation; }
     int GetOffsetX() const { return offsetX; }
     int GetOffsetY() const { return offsetY; }
+    void SetOffset(int offsetX, int offsetY);
+    void SetRotation(int rotation);
+    void DrawGhost(int ghostOffSetY);
 
 private:
     PieceType type;
@@ -36,5 +37,6 @@ private:
     int offsetX;
     int offsetY;
 
+    MinigameEngine::Vector2 worldStartPos;
 };
 

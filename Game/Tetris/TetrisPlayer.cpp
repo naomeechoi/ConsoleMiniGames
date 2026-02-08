@@ -1,18 +1,54 @@
 #include "TetrisPlayer.h"
 #include "TetrisBoard.h"
+#include "Render/Renderer.h"
 
-TetrisPlayer::TetrisPlayer()
+using namespace MinigameEngine;
+
+TetrisPlayer::TetrisPlayer(Vector2 worldStartPos)
+    :worldStartPos(worldStartPos)
 {
-    Spawn(PieceType::I);
 }
 
 TetrisPlayer::~TetrisPlayer()
 {
 }
 
+void TetrisPlayer::BeginPlay()
+{
+
+}
+
 void TetrisPlayer::Tick(float deltaTime, Input* input)
 {
-    //SetProperties(const char* image, const Vector2 & position, Color color, Color bgColor);
+}
+
+void TetrisPlayer::Draw()
+{
+    const auto& piece = g_PieceInfo[(int)type];
+
+    for (int i = 0; i < BLOCK_COUNT; ++i)
+    {
+        Vector2 pos;
+        pos.x = worldStartPos.x + (offsetX + piece.blocks[rotation][i].x) * brickXSize;
+        pos.y = worldStartPos.y + (offsetY + piece.blocks[rotation][i].y) * brickYSize;
+
+        Renderer::Get().SubmitMultiLine(
+            brick,
+            pos,
+            g_PieceInfo[(int)type].color,
+            g_PieceInfo[(int)type].color,
+            0
+        );
+    }
+}
+
+void TetrisPlayer::Clear()
+{
+    type = PieceType::EMPTY;
+    rotation = 0;
+
+    offsetX = 0;
+    offsetY = 0;
 }
 
 void TetrisPlayer::Spawn(PieceType t)
@@ -24,63 +60,54 @@ void TetrisPlayer::Spawn(PieceType t)
     offsetY = 0;
 }
 
-void TetrisPlayer::MoveLeft(const TetrisBoard& board)
+void TetrisPlayer::MoveHorizontal(bool isLeft)
 {
-    if (board.CanPlace(type, rotation, offsetX - 1, offsetY))
+    if (isLeft)
         offsetX--;
-}
-
-void TetrisPlayer::MoveRight(const TetrisBoard& board)
-{
-    if (board.CanPlace(type, rotation, offsetX + 1, offsetY))
+    else
         offsetX++;
 }
 
-bool TetrisPlayer::MoveDown(const TetrisBoard& board)
+void TetrisPlayer::MoveDown()
 {
-    if (board.CanPlace(type, rotation, offsetX, offsetY + 1))
-    {
-        offsetY++;
-        return true;
-    }
-    return false;
+    offsetY++;
 }
 
-void TetrisPlayer::RotateCW(const TetrisBoard& board)
+void TetrisPlayer::Rotate()
 {
-    int nextRot = (rotation + 1) % 4;
-
-    // 기본 회전
-    if (board.CanPlace(type, nextRot, offsetX, offsetY))
-    {
-        rotation = nextRot;
-        return;
-    }
-
-    // ===== 최소 wall kick =====
-    const int kicks[4][2] =
-    {
-        {-1,0},
-        {1,0},
-        {0,-1},
-        {0,1}
-    };
-
-    for (auto& k : kicks)
-    {
-        if (board.CanPlace(type, nextRot,
-            offsetX + k[0],
-            offsetY + k[1]))
-        {
-            offsetX += k[0];
-            offsetY += k[1];
-            rotation = nextRot;
-            return;
-        }
-    }
+    rotation = (rotation + 1) % ROTATION_COUNT;
 }
 
-void TetrisPlayer::HardDrop(const TetrisBoard& board)
+void TetrisPlayer::SetOffset(int offsetX, int offsetY)
 {
-    while (MoveDown(board)) {}
+    this->offsetX = offsetX;
+    this->offsetY = offsetY;
+}
+
+void TetrisPlayer::SetRotation(int rotation)
+{
+	this->rotation = rotation;
+}
+
+void TetrisPlayer::DrawGhost(int ghostOffsetY)
+{
+    const auto& piece = g_PieceInfo[(int)type];
+
+    for (int i = 0; i < BLOCK_COUNT; ++i)
+    {
+        Vector2 pos;
+        pos.x = worldStartPos.x +
+            (offsetX + piece.blocks[rotation][i].x) * brickXSize;
+
+        pos.y = worldStartPos.y +
+            (ghostOffsetY + piece.blocks[rotation][i].y) * brickYSize;
+
+        Renderer::Get().SubmitMultiLine(
+            brick,
+            pos,
+            Color::Gray,
+            Color::Gray,
+            0
+        );
+    }
 }

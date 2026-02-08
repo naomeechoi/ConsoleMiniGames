@@ -1,6 +1,7 @@
 #pragma once
 #include "Math/Vector2.h"
 #include "Util/Color.h"
+
 using namespace MinigameEngine;
 
 constexpr int PIECE_COUNT = 7;
@@ -9,6 +10,7 @@ constexpr int BLOCK_COUNT = 4;
 
 enum class PieceType
 {
+    EMPTY = -1,
     I = 0,
     O,
     T,
@@ -26,3 +28,6 @@ struct PieceInfo
 
 
 extern const PieceInfo g_PieceInfo[PIECE_COUNT];
+extern const char* brick;
+extern const int brickXSize;
+extern const int brickYSize;

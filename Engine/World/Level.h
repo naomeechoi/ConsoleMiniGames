@@ -21,7 +21,7 @@ namespace MinigameEngine
 
 		virtual void OnExit();
 		virtual void BeginPlay();
-		virtual void Tick(float deletaTime, Input* input);
+		virtual void Tick(float deltaTime, Input* input);
 		virtual void Draw();
 
 		void AddNewActor(Actor* const newActor);
@@ -36,6 +36,7 @@ namespace MinigameEngine
 		std::optional<int> ConsumeRequestedShowResult();
 
 		void SetLevelDisplaySize(Vector2 displaySize);
+		Vector2 GetLevelDisplaySize();
 		Color GetEdgeColor();
 		void SetResult(int result);
 

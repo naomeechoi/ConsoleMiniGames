@@ -39,11 +39,11 @@ namespace MinigameEngine
 		}
 	}
 
-	void Level::Tick(float deletaTime, Input* input)
+	void Level::Tick(float deltaTime, Input* input)
 	{
 		for (Actor* actor : actors)
 		{
-			actor->Tick(deletaTime, input);
+			actor->Tick(deltaTime, input);
 		}
 	}
 
@@ -119,6 +119,11 @@ namespace MinigameEngine
 	void Level::SetLevelDisplaySize(Vector2 displaySize)
 	{
 		this->displaySize = displaySize;
+	}
+
+	Vector2 Level::GetLevelDisplaySize()
+	{
+		return displaySize;
 	}
 
 	Color Level::GetEdgeColor()
