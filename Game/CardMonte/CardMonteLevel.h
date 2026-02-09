@@ -11,6 +11,7 @@ using namespace MinigameEngine;
 class UITop;
 class UILoadingBar;
 class UIMessage;
+class UIColorEffect;
 class CardMonteMode;
 class CardMonteLevel : public Level
 {
@@ -51,6 +52,7 @@ private:
 	// UI
 	UITop* topUI = nullptr;
 	UILoadingBar* loadingBarUI = nullptr;
+	UIColorEffect* colorEffectUI = nullptr;
 	UIMessage* messageUI = nullptr;
 
 private:

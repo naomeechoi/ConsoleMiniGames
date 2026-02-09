@@ -6,6 +6,7 @@
 #include "Common/LevelType.h"
 #include "UI/UITop.h"
 #include "UI/UILoadingBar.h"
+#include "UI/UIColorEffect.h"
 #include "UI/UIMessage.h"
 #include "Util/Random.h"
 #include <iostream>
@@ -13,7 +14,13 @@
 #include <sstream>
 #include <algorithm>
 
-const int PADDING = 10;
+const int CARD_LEFT_X_OFFSET = 10;
+const int UI_START_POS_X = 3;
+const int UI_START_POS_Y = 2;
+const int UI_BOTTOM_OFFSET_Y = 3;
+const float BLANK_TIME = 4.0f;
+const int BLANK_COUNT = 20;
+const int MESSAGE_UI_OFFSET_X = 5;
 
 CardMonteLevel::CardMonteLevel()
 {
@@ -34,6 +41,12 @@ CardMonteLevel::~CardMonteLevel()
     {
         delete loadingBarUI;
         loadingBarUI = nullptr;
+    }
+
+    if (colorEffectUI)
+    {
+        delete messageUI;
+        messageUI = nullptr;
     }
 
     if (messageUI)
@@ -63,17 +76,21 @@ void CardMonteLevel::BeginPlay()
         mode = new CardMonteMode();
 
     if (!topUI)
-        topUI = new UITop(displaySize.x, Vector2(3, 2), "Card Monte");
+        topUI = new UITop(displaySize.x, Vector2(UI_START_POS_X, UI_START_POS_Y), "Card Monte");
 
     if (!loadingBarUI)
-        loadingBarUI = new UILoadingBar(Vector2(3, displaySize.y - 3), displaySize.x - 5, playTime, '#');
+        loadingBarUI = new UILoadingBar(Vector2(UI_START_POS_X, displaySize.y - UI_BOTTOM_OFFSET_Y), (float)(displaySize.x - MESSAGE_UI_OFFSET_X), playTime, '#');
 
+    if (!colorEffectUI)
+        colorEffectUI = new UIColorEffect(edgeColor, Color::LightRed, BLANK_TIME, BLANK_COUNT);
+    
     if (!messageUI)
         messageUI = new UIMessage();
 
     if (!mode
         || !topUI
         || !loadingBarUI
+        || !colorEffectUI
         || !messageUI)
     {
         // 게임 시작 못하는 상황
@@ -88,7 +105,7 @@ void CardMonteLevel::BeginPlay()
 
     // 멤버 변수인 message를 직접 수정하지 말고 지역 변수 생성
     std::string finalMessage = message + std::to_string(answer);
-    messageUI->Start(displaySize.x, Vector2(3, displaySize.y - 5), finalMessage, " ");
+    messageUI->Start(displaySize.x, Vector2(3, displaySize.y - MESSAGE_UI_OFFSET_X), finalMessage, " ");
     // 시작
     ChangeState(&CardMonteLevel::StateShowing, showingTime);
 }
@@ -118,6 +135,11 @@ void CardMonteLevel::Tick(float deltaTime, Input* input)
     if (loadingBarUI)
     {
         loadingBarUI->Tick(deltaTime);
+    }
+
+    if (colorEffectUI)
+    {
+        colorEffectUI->Tick(deltaTime);
     }
 }
 
@@ -195,10 +217,10 @@ void CardMonteLevel::LoadSetting()
             cardFilpTime = stof(line.substr(line.find('=') + 1));
         }
         else if (line.find("cardWidth") != std::string::npos) {
-            cardWidth = stof(line.substr(line.find('=') + 1));
+            cardWidth = stoi(line.substr(line.find('=') + 1));
         }
         else if (line.find("cardHeight") != std::string::npos) {
-            cardHeight = stof(line.substr(line.find('=') + 1));
+            cardHeight = stoi(line.substr(line.find('=') + 1));
         }
         else if (line.find("showingTime") != std::string::npos) {
             showingTime = stof(line.substr(line.find('=') + 1));
@@ -230,17 +252,17 @@ void CardMonteLevel::LoadSetting()
 
 void CardMonteLevel::CardSetting()
 {
-    float remainingSpace = displaySize.x - 2 * PADDING - cardCount * cardWidth;
-    float padding = (cardCount > 1) ? remainingSpace / (cardCount - 1) : 0;
+    float remainingSpace = float(displaySize.x - 2 * CARD_LEFT_X_OFFSET - cardCount * cardWidth);
+    float cardGap = (cardCount > 1) ? remainingSpace / (cardCount - 1) : 0.0f;
 
-    float posY = displaySize.y / 2 - cardHeight / 2; // 세로 중앙
+    float posY = float(displaySize.y / 2 - cardHeight / 2); // 세로 중앙
 
     cards.clear();
     for (int i = 0; i < cardCount; i++) {
         Card card;
         card.num = i + 1;
-        card.pos.x = PADDING + i * (cardWidth + padding);
-        card.pos.y = posY;
+        card.pos.x = CARD_LEFT_X_OFFSET + i * (cardWidth + (int)cardGap);
+        card.pos.y = (int)posY;
         card.originPos = card.pos;
         cards.push_back(card);
     }
@@ -268,6 +290,9 @@ void CardMonteLevel::Clear()
         loadingBarUI->Stop();
         loadingBarUI->Clear();
     }
+
+    if (colorEffectUI)
+        colorEffectUI->Stop();
 
     if (messageUI)
         messageUI->Clear();
@@ -311,7 +336,7 @@ void CardMonteLevel::StateFilp(float deltatime)
     FlipCard(false);
     if (stateTimer.IsTimeOut())
     {
-        spriteIdx = cardSprites.size() - 1;
+        spriteIdx = (int)cardSprites.size() - 1;
         ChangeState(&CardMonteLevel::StateShuffle, cardFilpTime);
     }
 }
@@ -320,7 +345,7 @@ void CardMonteLevel::FlipCard(bool isOpen)
 {
 
     float t = stateTimer.GetRatio();
-    int maxIdx = cardSprites.size() - 1;
+    int maxIdx = (int)cardSprites.size() - 1;
     int flipIdx = isOpen ? (int)((1-t) * maxIdx) : (int)(t * maxIdx);
     flipIdx = std::clamp(flipIdx, 0, maxIdx);
     spriteIdx = flipIdx;
@@ -425,6 +450,12 @@ void CardMonteLevel::StateShuffle(float deltatime)
 void CardMonteLevel::StateChoose(float deltatime)
 {
     stateTimer.Tick(deltatime);
+
+    if (colorEffectUI)
+    {
+        colorEffectUI->Start();
+    }
+
     //보여주는 로직
     if (stateTimer.IsTimeOut())
         ChangeState(&CardMonteLevel::StateGameOver, cardFilpTime);
@@ -504,12 +535,12 @@ Vector2 CardMonteLevel::CircularLerp(const Vector2& start, const Vector2& end, f
     float angle = topArc ? (t * 3.14159f) : ((1.0f - t) * 3.14159f); // 0~π
 
     Vector2 pos;
-    pos.x = center.x + radiusX * cos(angle);
+    pos.x = (int)(center.x + radiusX * cos(angle));
     
     if(topArc)
-        pos.y = center.y - radiusY * sin(angle);
+        pos.y = (int)(center.y - radiusY * sin(angle));
     else
-        pos.y = center.y + radiusY * sin(angle);
+        pos.y = (int)(center.y + radiusY * sin(angle));
 
     return CenterToTopLeft(pos);
 }

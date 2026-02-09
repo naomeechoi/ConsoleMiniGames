@@ -36,7 +36,6 @@ private:
 	void LoadText();
 	void MakeDifferences();
 	void DrawPaint();
-	char GetCharAtCursor() const;
 	int GetIndexAtPos(Vector2 pos) const;
 	Vector2 GetPosAtIndex(int idx, Vector2 topLeft) const;
 	bool ValidCheck();
@@ -54,11 +53,13 @@ private:
 
 	// Paint
 	Vector2 paintSize;
-	std::string paintStr;
-	std::string paintStr2;
+	std::vector<std::pair<std::string, std::string>> paints;
+	std::string* paintStr = nullptr;
+	std::string* paintStr2 = nullptr;
 	std::vector<int> lineLengths;
 
 private:
 	Cursor cursor;
 	Timer timer;
+	int answerCount = 20;
 };

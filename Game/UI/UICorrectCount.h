@@ -9,7 +9,7 @@ class UICorrectCount
 public:
 	UICorrectCount();
 	void Draw();
-	void AddCount(int adding);
+	void AddCount();
 
 	void Start(int y, int limitX, int maxCount);
 	void Clear();

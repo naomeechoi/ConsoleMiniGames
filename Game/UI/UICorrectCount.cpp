@@ -7,9 +7,9 @@ UICorrectCount::UICorrectCount()
 {
 }
 
-void UICorrectCount::AddCount(int adding)
+void UICorrectCount::AddCount()
 {
-	curCount += adding;
+	curCount++;
 	if (curCount > maxCount)
 		curCount = maxCount;
 

@@ -24,7 +24,7 @@ void UILoadingBar::Tick(float deltaTime)
 
     // 이미 다 찼으면 더 이상 그리지 않음
     int currentWidth = (int)loadingBarStr.size();
-    int remainWidth = maxWidth - currentWidth;
+    int remainWidth = (int)maxWidth - currentWidth;
 
     if (remainWidth <= 0)
         return;
