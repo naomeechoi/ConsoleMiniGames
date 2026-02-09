@@ -68,10 +68,12 @@ private:
 
 private:
     void LoadEdgeTxt();
+    void LoadOneBrickEdgeTxt();
     bool CheckOutOfBoundary(int x, int y);
 
 private:
     std::string edge;
+    std::string oneBrickEdge;
     float lineFlashTimers[BOARD_HEIGHT] = { 0 };
 
     bool isClearing = false;

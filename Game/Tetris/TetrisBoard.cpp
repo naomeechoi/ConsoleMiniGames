@@ -14,6 +14,7 @@ TetrisBoard::TetrisBoard(Vector2 startPos)
     : startPos(startPos)
 {
     LoadEdgeTxt();
+    LoadOneBrickEdgeTxt();
     Clear();
 }
 
@@ -41,6 +42,38 @@ void TetrisBoard::Draw()
         edge.c_str(),
         edgePos,
         Color::Green
+    );
+
+    edgePos.x += 42 + 1;
+    Renderer::Get().SubmitMultiLine(
+        "N E X T         \0",
+        edgePos,
+        Color::Yellow
+    );
+
+    edgePos.y += 1;
+    for (int i = 0; i < 3; i++)
+    {
+        Renderer::Get().SubmitMultiLine(
+            oneBrickEdge.c_str(),
+            edgePos,
+            Color::Yellow
+        );
+        edgePos.y += 9;
+    }
+
+    edgePos.y = startPos.y + 42 - 10;
+    Renderer::Get().SubmitMultiLine(
+        "H O L D         \0",
+        edgePos,
+        Color::Red
+    );
+
+    edgePos.y = startPos.y + 42 - 9;
+    Renderer::Get().SubmitMultiLine(
+        oneBrickEdge.c_str(),
+        edgePos,
+        Color::Red
     );
 
     for (int y = 0; y < BOARD_HEIGHT; ++y)
@@ -317,6 +350,22 @@ void TetrisBoard::LoadEdgeTxt()
     buffer << file.rdbuf();
     edge = buffer.str();
 }
+
+void TetrisBoard::LoadOneBrickEdgeTxt()
+{
+    std::ifstream file("../Assets/Tetris/OneBrickEdge.txt");
+    if (!file.is_open())
+    {
+        std::cout << "Fail to open BoardEdge.txt\n";
+        __debugbreak();
+        return;
+    }
+
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    oneBrickEdge = buffer.str();
+}
+
 
 bool TetrisBoard::CheckOutOfBoundary(int x, int y)
 {

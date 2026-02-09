@@ -28,6 +28,9 @@ struct PieceInfo
 
 
 extern const PieceInfo g_PieceInfo[PIECE_COUNT];
+extern const char* smallBrick;
+extern const int smallBrickXSize;
+extern const int smallBrickYSize;
 extern const char* brick;
 extern const int brickXSize;
 extern const int brickYSize;

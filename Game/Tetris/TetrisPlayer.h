@@ -2,6 +2,7 @@
 #include "System/Timer.h"
 #include "System/Input.h"
 #include "TetrisPieces.h"
+#include <queue>
 
 class TetrisPlayer
 {
@@ -12,6 +13,7 @@ public:
     void BeginPlay();
     void Tick(float deltaTime, MinigameEngine::Input* input);
     void Draw();
+    void DrawNextPieces();
     void DrawGhost(int ghostOffSetY);
     void Clear();
 
@@ -29,6 +31,8 @@ public:
     int GetOffsetY() const { return offsetY; }
     void SetOffset(int offsetX, int offsetY);
     void SetRotation(int rotation);
+    void InsertPieceQueue(PieceType t);
+    PieceType GetNextPiece();
 
 private:
     PieceType type;
@@ -36,6 +40,8 @@ private:
 
     int offsetX = -1;
     int offsetY = -1;
+
+	std::deque<PieceType> pieceQueue;
 
     MinigameEngine::Vector2 worldStartPos;
 };
