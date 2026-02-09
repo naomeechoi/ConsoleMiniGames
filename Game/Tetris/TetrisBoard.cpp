@@ -100,18 +100,86 @@ void TetrisBoard::Tick(float deltaTime)
     ClearLines(deltaTime);
 }
 
+bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
+{
+    x = BOARD_WIDTH / 2;
+    y = 0;
+    rot = 0;
+
+    const auto& piece = g_PieceInfo[(int)type];
+
+    // I L 같은 요소를 위해 2칸까지 위로 올려봄
+    for (int yOffset = 0; yOffset >= -2; --yOffset)
+    {
+        int outOfBoundaryCount = 0;
+        bool collision = false;
+
+        for (int i = 0; i < BLOCK_COUNT; ++i)
+        {
+            int brickX = x + piece.blocks[rot][i].x;
+            int brickY = y + yOffset + piece.blocks[rot][i].y;
+
+            if (!CheckOutOfBoundary(brickX, brickY))
+            {
+                outOfBoundaryCount++;
+                continue;
+            }
+
+            if (IsOccupied(brickX, brickY))
+            {
+                collision = true;
+                break;
+            }
+        }
+
+        // 모든 블록이 화면 밖이면 spawn 불가
+        if (outOfBoundaryCount == BLOCK_COUNT)
+        {
+            x = -1;
+            y = -1;
+            return false;
+        }
+
+        if (collision)
+            continue; // 다른 yOffset 시도
+
+        // 성공한 위치
+        y += yOffset;
+        return true;
+    }
+
+    // -2까지 다 실패하면 spawn 실패
+    x = -1;
+    y = -1;
+    return false;
+}
+
 bool TetrisBoard::IsInside(int x, int y) const
 {
-    return x >= 0 && x < BOARD_WIDTH &&
-        y >= 0 && y < BOARD_HEIGHT;
+    return IsInsideX(x) && IsInsideY(y);
 }
 
-bool TetrisBoard::IsOccupied(int x, int y) const
+bool TetrisBoard::IsInsideX(int x) const
 {
-    return grid[y][x].type != PieceType::EMPTY;
+    return x >= 0 && x < BOARD_WIDTH;
 }
 
-bool TetrisBoard::CanPlace(PieceType type, int rotation, int ox, int oy) const
+bool TetrisBoard::IsInsideY(int y) const
+{
+    return y < BOARD_HEIGHT;
+}
+
+bool TetrisBoard::IsOccupied(int x, int y)
+{
+    if(y >= 0 && y < BOARD_HEIGHT &&
+       x >= 0 && x < BOARD_WIDTH)
+    {
+        return grid[y][x].type != PieceType::EMPTY;
+	}
+    return false;
+}
+
+bool TetrisBoard::CanPlace(PieceType type, int rotation, int ox, int oy)
 {
     const auto& piece = g_PieceInfo[(int)type];
 
@@ -126,7 +194,7 @@ bool TetrisBoard::CanPlace(PieceType type, int rotation, int ox, int oy) const
     return true;
 }
 
-void TetrisBoard::PlacePiece(PieceType type, int rotation, int ox, int oy)
+bool TetrisBoard::CanPlaceForHorizontal(PieceType type, int rotation, int ox, int oy)
 {
     const auto& piece = g_PieceInfo[(int)type];
 
@@ -135,11 +203,32 @@ void TetrisBoard::PlacePiece(PieceType type, int rotation, int ox, int oy)
         int x = ox + piece.blocks[rotation][i].x;
         int y = oy + piece.blocks[rotation][i].y;
 
-        grid[y][x].type = type;
-        grid[y][x].flashFrame = 0.3f;
+        if (!IsInsideX(x) || IsOccupied(x, y))
+            return false;
     }
+    return true;
 }
 
+bool TetrisBoard::PlacePiece(PieceType type, int rotation, int ox, int oy)
+{
+    const auto& piece = g_PieceInfo[(int)type];
+    bool placedAtLeastOne = false;
+    for (int i = 0; i < BLOCK_COUNT; ++i)
+    {
+        int x = ox + piece.blocks[rotation][i].x;
+        int y = oy + piece.blocks[rotation][i].y;
+
+        if (!CheckOutOfBoundary(x, y))
+            continue;
+
+        grid[y][x].type = type;
+        grid[y][x].flashFrame = 0.3f;
+        placedAtLeastOne = true;
+    }
+
+    return placedAtLeastOne;
+}
+ 
 void TetrisBoard::ClearLines(float deltaTime)
 {
     if (!isClearing)
@@ -227,4 +316,15 @@ void TetrisBoard::LoadEdgeTxt()
     std::ostringstream buffer;
     buffer << file.rdbuf();
     edge = buffer.str();
+}
+
+bool TetrisBoard::CheckOutOfBoundary(int x, int y)
+{
+    if (y < 0 || y >= BOARD_HEIGHT)
+        return false;
+
+    if (x < 0 || x >= BOARD_WIDTH)
+        return false;
+
+    return true;
 }

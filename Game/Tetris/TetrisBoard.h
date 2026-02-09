@@ -24,7 +24,9 @@ public:
     // 상태 조회
     // =========================
     bool IsInside(int x, int y) const;
-    bool IsOccupied(int x, int y) const;
+    bool IsInsideX(int x) const;
+    bool IsInsideY(int y) const;
+    bool IsOccupied(int x, int y);
 
     PieceType GetCell(int x, int y) const;
     bool IsCellEmpty(int x, int y) const;
@@ -35,12 +37,16 @@ public:
     bool CanPlace(PieceType type,
         int rotation,
         int offsetX,
-        int offsetY) const;
+        int offsetY);
+    bool CanPlaceForHorizontal(PieceType type,
+        int rotation,
+        int offsetX,
+        int offsetY);
 
     // =========================
     // 퍼즐 고정
     // =========================
-    void PlacePiece(PieceType type,
+    bool PlacePiece(PieceType type,
         int rotation,
         int offsetX,
         int offsetY);
@@ -53,6 +59,8 @@ public:
     void Draw();
 	void Tick(float deltaTime);
 
+    bool GetSpawnPos(PieceType type, int& x, int& y, int& rot);
+
 private:
     // -1 = empty
     std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> grid;
@@ -60,6 +68,7 @@ private:
 
 private:
     void LoadEdgeTxt();
+    bool CheckOutOfBoundary(int x, int y);
 
 private:
     std::string edge;

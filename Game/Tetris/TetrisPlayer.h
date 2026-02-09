@@ -12,9 +12,10 @@ public:
     void BeginPlay();
     void Tick(float deltaTime, MinigameEngine::Input* input);
     void Draw();
+    void DrawGhost(int ghostOffSetY);
     void Clear();
 
-    void Spawn(PieceType type);
+    void Spawn(PieceType t, int x, int y, int rot);
 
     void MoveHorizontal(bool isLeft);
     void MoveDown();
@@ -28,14 +29,13 @@ public:
     int GetOffsetY() const { return offsetY; }
     void SetOffset(int offsetX, int offsetY);
     void SetRotation(int rotation);
-    void DrawGhost(int ghostOffSetY);
 
 private:
     PieceType type;
     int rotation;
 
-    int offsetX;
-    int offsetY;
+    int offsetX = -1;
+    int offsetY = -1;
 
     MinigameEngine::Vector2 worldStartPos;
 };

@@ -26,12 +26,17 @@ void TetrisPlayer::Draw()
 {
     const auto& piece = g_PieceInfo[(int)type];
 
+    if (offsetX == -1 && offsetY == -1)
+        return;
+
     for (int i = 0; i < BLOCK_COUNT; ++i)
     {
+        if (offsetY + piece.blocks[rotation][i].y < 0)
+            continue;
+
         Vector2 pos;
         pos.x = worldStartPos.x + (offsetX + piece.blocks[rotation][i].x) * brickXSize;
         pos.y = worldStartPos.y + (offsetY + piece.blocks[rotation][i].y) * brickYSize;
-
         Renderer::Get().SubmitMultiLine(
             brick,
             pos,
@@ -42,23 +47,49 @@ void TetrisPlayer::Draw()
     }
 }
 
+void TetrisPlayer::DrawGhost(int ghostOffsetY)
+{
+    const auto& piece = g_PieceInfo[(int)type];
+
+    for (int i = 0; i < BLOCK_COUNT; ++i)
+    {
+        if (ghostOffsetY + piece.blocks[rotation][i].y < 0)
+            continue;
+
+        Vector2 pos;
+        pos.x = worldStartPos.x +
+            (offsetX + piece.blocks[rotation][i].x) * brickXSize;
+
+        pos.y = worldStartPos.y +
+            (ghostOffsetY + piece.blocks[rotation][i].y) * brickYSize;
+
+        Renderer::Get().SubmitMultiLine(
+            brick,
+            pos,
+            Color::Gray,
+            Color::Gray,
+            0
+        );
+    }
+}
+
 void TetrisPlayer::Clear()
 {
     type = PieceType::EMPTY;
     rotation = 0;
 
-    offsetX = 0;
-    offsetY = 0;
+    offsetX = -1;
+    offsetY = -1;
 }
 
-void TetrisPlayer::Spawn(PieceType t)
+void TetrisPlayer::Spawn(PieceType t, int x, int y, int rot)
 {
     type = t;
-    rotation = 0;
+    rotation = rot;
 
-    offsetX = BOARD_WIDTH / 2;
-    offsetY = 0;
-}
+    offsetX = x;
+    offsetY = y;
+} 
 
 void TetrisPlayer::MoveHorizontal(bool isLeft)
 {
@@ -87,27 +118,4 @@ void TetrisPlayer::SetOffset(int offsetX, int offsetY)
 void TetrisPlayer::SetRotation(int rotation)
 {
 	this->rotation = rotation;
-}
-
-void TetrisPlayer::DrawGhost(int ghostOffsetY)
-{
-    const auto& piece = g_PieceInfo[(int)type];
-
-    for (int i = 0; i < BLOCK_COUNT; ++i)
-    {
-        Vector2 pos;
-        pos.x = worldStartPos.x +
-            (offsetX + piece.blocks[rotation][i].x) * brickXSize;
-
-        pos.y = worldStartPos.y +
-            (ghostOffsetY + piece.blocks[rotation][i].y) * brickYSize;
-
-        Renderer::Get().SubmitMultiLine(
-            brick,
-            pos,
-            Color::Gray,
-            Color::Gray,
-            0
-        );
-    }
 }

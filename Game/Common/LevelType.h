@@ -11,3 +11,9 @@ enum class LevelType : int
 	Tetris,
 	GameResult,
 };
+
+enum EResult
+{
+	fail = 0,
+	success,
+};

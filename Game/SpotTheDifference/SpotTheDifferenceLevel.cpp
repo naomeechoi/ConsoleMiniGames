@@ -17,14 +17,15 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <Util/Delete.h>
 
-enum EResult
-{
-	fail = 0,
-	success,
-};
-
-float const PLAYTIME = 30.0f; // TODO: 외부에서 플레이 시간 받 수 있게 수정
+const int UI_START_POS_X = 3;
+const int UI_START_POS_Y = 2;
+const float PLAYTIME = 30.0f; // TODO: 외부에서 플레이 시간 받 수 있게 수정
+const float BLANK_TIME = 1.0f;
+const int BLANK_COUNT = 5;
+const int DRAW_START_Y = 4;
+const int GAP_BETWEEN_PAINT = 6;
 
 void SpotTheDifferenceLevel::Cursor::Init(Vector2 topLeft, Vector2 size)
 {
@@ -70,35 +71,11 @@ SpotTheDifferenceLevel::SpotTheDifferenceLevel()
 
 SpotTheDifferenceLevel::~SpotTheDifferenceLevel()
 {
-	if (topUI)
-	{
-		delete topUI;
-		topUI = nullptr;
-	}
-
-	if (loadingBarUI)
-	{
-		delete loadingBarUI;
-		loadingBarUI = nullptr;
-	}
-
-	if (correctCountUI)
-	{
-		delete correctCountUI;
-		correctCountUI = nullptr;
-	}
-
-	if (colorEffectUI)
-	{
-		delete colorEffectUI;
-		colorEffectUI = nullptr;
-	}
-
-	if (mode)
-	{
-		delete mode;
-		mode = nullptr;
-	}
+	SafeDelete(topUI);
+	SafeDelete(loadingBarUI);
+	SafeDelete(correctCountUI);
+	SafeDelete(colorEffectUI);
+	SafeDelete(mode);
 }
 
 void SpotTheDifferenceLevel::BeginPlay()
@@ -115,27 +92,19 @@ void SpotTheDifferenceLevel::BeginPlay()
 	hasBeganPlay = true;
 
 	if (!topUI)
-		topUI = new UITop(displaySize.x, Vector2(3, 2), "Spot The Difference");
+		topUI = new UITop(displaySize.x, Vector2(UI_START_POS_X, UI_START_POS_Y), "Spot The Difference");
 
 	if (!loadingBarUI)
-		loadingBarUI = new UILoadingBar(Vector2(3, paintSize.y + 6), ((float)displaySize.x / 10.0f) * 9.0f, PLAYTIME, '#');
+		loadingBarUI = new UILoadingBar(Vector2(UI_START_POS_X, paintSize.y + 6), ((float)displaySize.x / 10.0f) * 9.0f, PLAYTIME, '#');
 
 	if (!correctCountUI)
-		correctCountUI = new UICorrectCount(); // TODO: 하드 코딩 수정 필요
+		correctCountUI = new UICorrectCount();
 
 	if (!colorEffectUI)
-		colorEffectUI = new UIColorEffect(edgeColor, Color::LightRed, 1.0f, 5); // TODO: 하드 코딩 수정 필요
+		colorEffectUI = new UIColorEffect(edgeColor, Color::LightRed, BLANK_TIME, BLANK_COUNT);
 
-	if (!mode
-		|| !topUI
-		|| !loadingBarUI
-		|| !correctCountUI
-		|| !colorEffectUI)
-	{
-		// 게임 시작 못하는 상황
-		RequestChangeLevel((int)LevelType::Menu);
+	if (!ValidCheck())
 		return;
-	}
 
 	timer.SetTargetTime(PLAYTIME);
 
@@ -172,6 +141,9 @@ void SpotTheDifferenceLevel::OnExit()
 
 void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 {
+	if (!ValidCheck())
+		return;
+
 	timer.Tick(deltaTime);
 	if (timer.IsTimeOut())
 	{
@@ -192,10 +164,8 @@ void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 		int idx = GetIndexAtPos(cursor.pos);
 		if (mode->Check(idx))
 		{
-			if(correctCountUI)
-				correctCountUI->AddCount(1);
-			if (colorEffectUI)
-				colorEffectUI->Start();
+			correctCountUI->AddCount(1);
+			colorEffectUI->Start();
 
 			// 정답을 다 맞췄을 때
 			if (mode->IsGameClear())
@@ -208,29 +178,19 @@ void SpotTheDifferenceLevel::Tick(float deltaTime, Input* input)
 
 	cursor.Tick(deltaTime, input);
 	
-	if (loadingBarUI)
-	{
-		loadingBarUI->Tick(deltaTime);
-	}
-
-	if (colorEffectUI)
-	{
-		colorEffectUI->Tick(deltaTime);
-	}
+	loadingBarUI->Tick(deltaTime);
+	colorEffectUI->Tick(deltaTime);
 }
 
 void SpotTheDifferenceLevel::Draw()
 {
 	Level::Draw();
+	if (!ValidCheck())
+		return;
 
-	if (topUI)
-		topUI->Draw();
-
-	if (loadingBarUI)
-		loadingBarUI->Draw();
-
-	if (correctCountUI)
-		correctCountUI->Draw();
+	topUI->Draw();
+	loadingBarUI->Draw();
+	correctCountUI->Draw();
 
 	DrawPaint();
 
@@ -246,36 +206,31 @@ void SpotTheDifferenceLevel::Draw()
 		999
 	);
 
-	// 맞춘 정답들 표시해주기
-	if (mode)
+	const int totalWidth = paintSize.x * 2 + GAP_BETWEEN_PAINT;
+	Vector2 paint1StartPos((displaySize.x - totalWidth) / 2, DRAW_START_Y);
+
+	for (int idx : mode->GetUserAnswer())
 	{
-		const int totalWidth = paintSize.x * 2 + 6;
-		Vector2 paint1StartPos((displaySize.x - totalWidth) / 2, 4);
+		Vector2 pos = GetPosAtIndex(idx, cursor.topLeft);
 
-		for (int idx : mode->GetUserAnswer())
-		{
-			//Vector2 topLeft(cursor.pos.x - cursor.topLeft.x, cursor.pos.y - cursor.topLeft.y);
-			Vector2 pos = GetPosAtIndex(idx, cursor.topLeft);
+		char oneCharStr[2] = { paintStr2[idx], '\0' };
+		Renderer::Get().Submit(
+			oneCharStr,
+			pos,
+			Color::Green,
+			Color::Yellow,
+			999
+		);
 
-			char oneCharStr[2] = { paintStr2[idx], '\0' };
-			Renderer::Get().Submit(
-				oneCharStr,
-				pos,
-				Color::Green,
-				Color::Yellow,
-				999
-			);
-
-			pos = GetPosAtIndex(idx, paint1StartPos);
-			char oneCharStr2[2] = { paintStr[idx], '\0' };
-			Renderer::Get().Submit(
-				oneCharStr2,
-				pos,
-				Color::Green,
-				Color::Yellow,
-				999
-			);
-		}
+		pos = GetPosAtIndex(idx, paint1StartPos);
+		char oneCharStr2[2] = { paintStr[idx], '\0' };
+		Renderer::Get().Submit(
+			oneCharStr2,
+			pos,
+			Color::Green,
+			Color::Yellow,
+			999
+		);
 	}
 }
 
@@ -333,11 +288,9 @@ void SpotTheDifferenceLevel::MakeDifferences()
 		differencesSet.insert(random);
 	}
 
-	const int GAP = 6;
-	const int totalWidth = paintSize.x * 2 + GAP;
+	const int totalWidth = paintSize.x * 2 + GAP_BETWEEN_PAINT;
 	const int startX = (displaySize.x - totalWidth) / 2;
-	const int rightStartX = startX + paintSize.x + GAP;
-	const int startY = 4;
+	const int rightStartX = startX + paintSize.x + GAP_BETWEEN_PAINT;
 
 	std::unordered_set<Vector2> debugSet;
 	std::unordered_set<int> answerSet;
@@ -365,11 +318,11 @@ void SpotTheDifferenceLevel::MakeDifferences()
 		}
 
 		// 화면 좌표로 변환
-		debugSet.insert({ x + rightStartX, y + startY });
+		debugSet.insert({ x + rightStartX, y + DRAW_START_Y });
 		answerSet.insert(difference);
 	}
 
-	cursor.Init(Vector2(rightStartX, startY), paintSize);
+	cursor.Init(Vector2(rightStartX, DRAW_START_Y), paintSize);
 	Renderer::Get().SetDebugMode(debugSet);
 
 	if (mode)
@@ -378,25 +331,21 @@ void SpotTheDifferenceLevel::MakeDifferences()
 
 void SpotTheDifferenceLevel::DrawPaint()
 {
-	const int GAP = 6;
-
-	const int startY = 4; // TODO: 하드코딩 나중에 수정
-
-	const int totalWidth = paintSize.x * 2 + GAP;
+	const int totalWidth = paintSize.x * 2 + GAP_BETWEEN_PAINT;
 
 	const int startX = (displaySize.x - totalWidth) / 2;
 
 	// 왼쪽 그림
 	Renderer::Get().SubmitMultiLine(
 		paintStr.c_str(),
-		Vector2(startX, startY),
+		Vector2(startX, DRAW_START_Y),
 		Color::Green
 	);
 
 	// 오른쪽 그림
 	Renderer::Get().SubmitMultiLine(
 		paintStr2.c_str(),
-		Vector2(startX + paintSize.x + GAP, startY),
+		Vector2(startX + paintSize.x + GAP_BETWEEN_PAINT, DRAW_START_Y),
 		Color::Green
 	);
 
@@ -464,4 +413,20 @@ Vector2 SpotTheDifferenceLevel::GetPosAtIndex(int idx, Vector2 topLeft) const
 		topLeft.x + x,
 		topLeft.y + y
 	);
+}
+
+bool SpotTheDifferenceLevel::ValidCheck()
+{
+	if (!mode
+		|| !topUI
+		|| !loadingBarUI
+		|| !correctCountUI
+		|| !colorEffectUI)
+	{
+		// 게임 시작 못하는 상황
+		RequestChangeLevel((int)LevelType::Menu);
+		return false;
+	}
+
+	return true;
 }

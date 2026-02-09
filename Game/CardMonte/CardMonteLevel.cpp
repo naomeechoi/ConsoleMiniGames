@@ -13,12 +13,6 @@
 #include <sstream>
 #include <algorithm>
 
-enum EResult
-{
-	fail = 0,
-	success,
-};
-
 const int PADDING = 10;
 
 CardMonteLevel::CardMonteLevel()

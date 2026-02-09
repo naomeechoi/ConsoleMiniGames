@@ -2,9 +2,7 @@
 #include "World/Level.h"
 #include "Math/Vector2.h"
 #include "System/Timer.h"
-
 #include <string>
-#include <algorithm>
 
 using namespace MinigameEngine;
 class SpotTheDifferenceMode;
@@ -41,6 +39,7 @@ private:
 	char GetCharAtCursor() const;
 	int GetIndexAtPos(Vector2 pos) const;
 	Vector2 GetPosAtIndex(int idx, Vector2 topLeft) const;
+	bool ValidCheck();
 
 private:
 	bool hasBeganPlay = false;

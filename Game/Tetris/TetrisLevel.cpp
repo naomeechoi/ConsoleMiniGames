@@ -6,313 +6,306 @@
 #include "System/Input.h"
 #include "TetrisRotationSystem.h"
 #include "Util/Random.h"
+#include <iostream>
 
 using namespace MinigameEngine;
 
-const int MAX_LOCK_RESET = 15;
-
 TetrisLevel::TetrisLevel()
+    : player(nullptr), board(nullptr),
+    currentState(TetrisState::Falling)
 {
 }
 
 TetrisLevel::~TetrisLevel()
 {
-	OnExit();
-	delete player;
-	player = nullptr;
-
-	delete board;
-	board = nullptr;
+    OnExit();
+    delete player;
+    player = nullptr;
+    delete board;
+    board = nullptr;
 }
 
 void TetrisLevel::BeginPlay()
 {
-	if (hasBeganPlay)
-		return;
+    if (hasBeganPlay)
+        return;
 
-	hasBeganPlay = true;
+    hasBeganPlay = true;
 
-	Vector2 startPos;
-	startPos.x = (displaySize.x / 2 - 20) / 2;
-	startPos.y = (displaySize.y - 40) / 2;
-	if(!player)
-		player = new TetrisPlayer(startPos);
+    Vector2 startPos;
+    startPos.x = (displaySize.x / 2 - 20) / 2;
+    startPos.y = (displaySize.y - 40) / 2;
 
-	if(!board)
-		board = new TetrisBoard(startPos);
+    if (!player) player = new TetrisPlayer(startPos);
+    if (!board) board = new TetrisBoard(startPos);
 
-	if (!player || !board)
-	{
-		RequestChangeLevel((int)LevelType::Menu);
-		return;
-	}
+    if (!player || !board)
+    {
+        RequestChangeLevel((int)LevelType::Menu);
+        return;
+    }
 
-	int randomType = Random::Random((int)PieceType::I, (int)PieceType::Z);
-	player->Spawn((PieceType)randomType);
-	playerDownTime.SetTargetTime(1.0f);
-	softDropTimer.SetTargetTime(0.05f);
-	horizontalMoveTimer.SetTargetTime(0.05f);
+    playerDownTime.SetTargetTime(1.0f);
+    softDropTimer.SetTargetTime(0.05f);
+    horizontalMoveTimer.SetTargetTime(0.05f);
+
+    SpawnNewPiece();
 }
 
 void TetrisLevel::OnExit()
 {
-	hasBeganPlay = false;
-	playerDownTime.Reset();
-	softDropTimer.Reset();
-	horizontalMoveTimer.Reset();
-	board->Clear();
-	bool isLocking = false;
-	int lockResetCount = 0;
+    hasBeganPlay = false;
+
+    playerDownTime.Reset();
+    softDropTimer.Reset();
+    horizontalMoveTimer.Reset();
+    lockDelayTimer.Reset();
+
+    if (board)
+        board->Clear();
 }
 
 void TetrisLevel::Tick(float deltaTime, MinigameEngine::Input* input)
 {
-	if (input->IsKeyPressed(VK_ESCAPE))
-	{
-		RequestChangeLevel((int)LevelType::Menu);
-	}
+    if (!player || !board)
+        return;
 
-	board->Tick(deltaTime);
+    if (input->IsKeyPressed(VK_ESCAPE))
+    {
+        RequestChangeLevel((int)LevelType::Menu);
+        return;
+    }
 
-	// 자동 낙하
-	playerDownTime.Tick(deltaTime);
-	if (playerDownTime.IsTimeOut())
-	{
-		MoveDownOrFix();
-	}
+    board->Tick(deltaTime);
 
-	// Down 키 연속 낙하
-	if (input->IsKeyHeld(VK_DOWN))
-	{
-		softDropTimer.Tick(deltaTime);
-		if (softDropTimer.IsTimeOut())
-		{
-			MoveDownOrFix();
-			softDropTimer.Reset();
-		}
-	}
-	else if(input->IsKeyReleased(VK_DOWN))
-	{
-		softDropTimer.Reset(); // 키를 떼면 초기화
-	}
+    switch (currentState)
+    {
+    case TetrisState::Falling:
+        TickFalling(deltaTime, input);
+        break;
 
-	// Left
-	if (input->IsKeyHeld(VK_LEFT))
-	{
-		horizontalMoveTimer.Tick(deltaTime);
-		if (horizontalMoveTimer.IsTimeOut())
-		{
-			MoveHorizontal(true);
-			horizontalMoveTimer.Reset();
-		}
-	}
-	else if (input->IsKeyReleased(VK_LEFT))
-	{
-		horizontalMoveTimer.Reset();
-	}
-
-	// Right
-	if (input->IsKeyHeld(VK_RIGHT))
-	{
-		horizontalMoveTimer.Tick(deltaTime);
-		if (horizontalMoveTimer.IsTimeOut())
-		{
-			MoveHorizontal(false);
-			horizontalMoveTimer.Reset();
-		}
-	}
-	else if (input->IsKeyReleased(VK_RIGHT))
-	{
-		horizontalMoveTimer.Reset();
-	}
-
-	if (input->IsKeyPressed(VK_UP))
-	{
-		Rotate();
-	}
-
-	if (input->IsKeyPressed(VK_SPACE))
-	{
-		HardDrop();
-	}
-	
-	LockCheck(deltaTime);
-
+    case TetrisState::Locking:
+        TickLocking(deltaTime, input);
+        break;;
+    }
 }
 
-void
-TetrisLevel::Draw()
+void TetrisLevel::TickFalling(float deltaTime, Input* input)
 {
-	if (!player || !board)
-		return;
+    // 자동 낙하
+    playerDownTime.Tick(deltaTime);
+    if (playerDownTime.IsTimeOut())
+    {
+        if (!MoveDown())
+        {
+            EnterLockingState();
+        }
+        playerDownTime.Reset();
+    }
 
-	board->Draw();
+    HandleHorizontalInput(deltaTime, input);
 
+    if (input->IsKeyPressed(VK_UP))
+        Rotate();
 
-	player->DrawGhost(GetGhostY());
-	player->Draw();
+    // 소프트 드롭
+    if (input->IsKeyHeld(VK_DOWN))
+    {
+        softDropTimer.Tick(deltaTime);
+        if (softDropTimer.IsTimeOut())
+        {
+            if (!MoveDown())
+            {
+                EnterLockingState();
+            }
+            softDropTimer.Reset();
+        }
+    }
+    else if (input->IsKeyReleased(VK_DOWN))
+    {
+        softDropTimer.Reset();
+    }
+
+    // 하드 드롭
+    if (input->IsKeyPressed(VK_SPACE))
+    {
+        HardDrop();
+        isPlaceNow = true;
+        EnterLockingState();
+    }
 }
 
-void TetrisLevel::MoveDownOrFix()
+void TetrisLevel::TickLocking(float deltaTime, Input* input)
 {
-	PieceType type = player->GetPieceType();
-	int rotation = player->GetRotation();
-	int x = player->GetOffsetX();
-	int nextY = player->GetOffsetY() + 1;
+    HandleHorizontalInput(deltaTime, input);
 
-	if (board->CanPlace(type, rotation, x, nextY))
-	{
-		player->MoveDown();
-	}
+    if (input->IsKeyPressed(VK_UP))
+        Rotate();
 
-	playerDownTime.Reset();
+    // 아래로 이동 가능하면 Falling으로 전환
+    if (board->CanPlace(player->GetPieceType(), player->GetRotation(),
+        player->GetOffsetX(), player->GetOffsetY() + 1))
+    {
+        currentState = TetrisState::Falling;
+        return;
+    }
+
+    // Lock Delay 진행
+    lockDelayTimer.Tick(deltaTime);
+    if (lockDelayTimer.IsTimeOut() || isPlaceNow)
+    {
+        // 블록을 고정
+        board->PlacePiece(player->GetPieceType(), player->GetRotation(),
+            player->GetOffsetX(), player->GetOffsetY());
+
+        SpawnNewPiece();
+        isPlaceNow = false;
+    }
+}
+
+void TetrisLevel::Draw()
+{
+    if (!player || !board)
+        return;
+
+    board->Draw();
+    player->DrawGhost(GetGhostY());
+    player->Draw();
+}
+
+bool TetrisLevel::MoveDown()
+{
+    int x = player->GetOffsetX();
+    int y = player->GetOffsetY();
+    int rot = player->GetRotation();
+    PieceType type = player->GetPieceType();
+
+    if (board->CanPlace(type, rot, x, y + 1))
+    {
+        player->MoveDown();
+        return true;
+    }
+    return false;
+}
+
+void TetrisLevel::HandleHorizontalInput(float deltaTime, Input* input)
+{
+    if (input->IsKeyHeld(VK_LEFT))
+    {
+        horizontalMoveTimer.Tick(deltaTime);
+        if (horizontalMoveTimer.IsTimeOut())
+        {
+            MoveHorizontal(true);
+            horizontalMoveTimer.Reset();
+        }
+    }
+    else if (input->IsKeyReleased(VK_LEFT))
+    {
+        horizontalMoveTimer.Reset();
+    }
+
+    if (input->IsKeyHeld(VK_RIGHT))
+    {
+        horizontalMoveTimer.Tick(deltaTime);
+        if (horizontalMoveTimer.IsTimeOut())
+        {
+            MoveHorizontal(false);
+            horizontalMoveTimer.Reset();
+        }
+    }
+    else if (input->IsKeyReleased(VK_RIGHT))
+    {
+        horizontalMoveTimer.Reset();
+    }
 }
 
 void TetrisLevel::MoveHorizontal(bool isLeft)
 {
-	PieceType type = player->GetPieceType();
-	int rotation = player->GetRotation();
-	int nextX = player->GetOffsetX();
-	int y = player->GetOffsetY();
+    int x = player->GetOffsetX();
+    int y = player->GetOffsetY();
+    int rot = player->GetRotation();
+    PieceType type = player->GetPieceType();
 
-	if (isLeft)
-		nextX--;
-	else
-		nextX++;
+    int nextX = isLeft ? x - 1 : x + 1;
 
-	if (board->CanPlace(type, rotation, nextX, y))
-	{
-		player->MoveHorizontal(isLeft);
-
-		if (isLocking && lockResetCount < MAX_LOCK_RESET)
-		{
-			lockDelayTimer.Reset();
-			lockResetCount++;
-		}
-	}
+    if (board->CanPlaceForHorizontal(type, rot, nextX, y))
+    {
+        player->MoveHorizontal(isLeft);
+    }
 }
 
 void TetrisLevel::Rotate()
 {
-	PieceType type = player->GetPieceType();
-	int from = player->GetRotation();
-	int to = (from + 1) % ROTATION_COUNT;
+    int x = player->GetOffsetX();
+    int y = player->GetOffsetY();
+    int from = player->GetRotation();
+    int to = (from + 1) % ROTATION_COUNT;
+    PieceType type = player->GetPieceType();
 
-	int x = player->GetOffsetX();
-	int y = player->GetOffsetY();
+    const int (*kick)[2] = (type == PieceType::I) ? I_KICK[from] : JLSTZ_KICK[from];
 
-	const int (*kick)[2];
-
-	if (type == PieceType::I)
-		kick = I_KICK[from];
-	else
-		kick = JLSTZ_KICK[from];
-
-	for (int i = 0; i < offsetsForRotation; ++i)
-	{
-		int nx = x + kick[i][0];
-		int ny = y + kick[i][1];
-
-		if (board->CanPlace(type, to, nx, ny))
-		{
-			player->SetOffset(nx, ny);
-			player->SetRotation(to);
-
-			if (isLocking && lockResetCount < MAX_LOCK_RESET)
-			{
-				lockDelayTimer.Reset();
-				lockResetCount++;
-			}
-
-			return;
-		}
-	}
+    for (int i = 0; i < offsetsForRotation; ++i)
+    {
+        int nx = x + kick[i][0];
+        int ny = y + kick[i][1];
+        if (board->CanPlace(type, to, nx, ny))
+        {
+            player->SetOffset(nx, ny);
+            player->SetRotation(to);
+            return;
+        }
+    }
 }
 
 void TetrisLevel::HardDrop()
 {
-	PieceType type = player->GetPieceType();
-	int rotation = player->GetRotation();
-	int x = player->GetOffsetX();
-	int y = player->GetOffsetY();
+    int x = player->GetOffsetX();
+    int y = player->GetOffsetY();
+    int rot = player->GetRotation();
+    PieceType type = player->GetPieceType();
 
-	// 더 이상 내려갈 수 없을 때까지 이동
-	while (board->CanPlace(type, rotation, x, y + 1))
-	{
-		y++;
-	}
+    while (board->CanPlace(type, rot, x, y + 1))
+    {
+        y++;
+    }
 
-	// 최종 위치 적용
-	player->SetOffset(x, y);
-
-	// 즉시 고정
-	board->PlacePiece(type, rotation, x, y);
-
-	// 다음 블록 생성
-	int randomType = Random::Random((int)PieceType::I, (int)PieceType::Z);
-	player->Spawn((PieceType)randomType);
-
-	// Lock 상태 초기화
-	isLocking = false;
-	lockDelayTimer.Reset();
+    player->SetOffset(x, y);
 }
 
-void TetrisLevel::LockCheck(float deltatime)
+void TetrisLevel::SpawnNewPiece()
 {
-	bool canMoveDown = board->CanPlace(player->GetPieceType(),
-		player->GetRotation(),
-		player->GetOffsetX(),
-		player->GetOffsetY() + 1);
+    int randomType = Random::Random((int)PieceType::I, (int)PieceType::Z);
+    int spawnX, spawnY, rot;
 
-	if (canMoveDown)
-	{
-		// 아래로 이동 가능 → Lock 상태 초기화
-		isLocking = false;
-		lockDelayTimer.Reset();
-		lockResetCount = 0;
-	}
-	else
-	{
-		// 아래로 이동 불가 → Lock Delay 시작/진행
-		if (!isLocking)
-		{
-			isLocking = true;
-			lockResetCount = 0;
-			lockDelayTimer.SetTargetTime(0.5f);
-			lockDelayTimer.Reset();
-		}
-		else
-		{
-			lockDelayTimer.Tick(deltatime);
-			if (lockDelayTimer.IsTimeOut())
-			{
-				board->PlacePiece(player->GetPieceType(),
-					player->GetRotation(),
-					player->GetOffsetX(),
-					player->GetOffsetY());
+    if (!board->GetSpawnPos(PieceType(randomType), spawnX, spawnY, rot))
+    {
+        StateGameOver();
+        return;
+    }
 
-				int randomType = Random::Random((int)PieceType::I, (int)PieceType::Z);
-				player->Spawn((PieceType)randomType);
+    player->Spawn(PieceType(randomType), spawnX, spawnY, rot);
+    currentState = TetrisState::Falling;
+}
 
-				isLocking = false;
-				lockDelayTimer.Reset();
-			}
-		}
-	}
+void TetrisLevel::EnterLockingState()
+{
+    lockDelayTimer.Reset();
+    lockDelayTimer.SetTargetTime(0.2f);
+    currentState = TetrisState::Locking;
+}
+
+void TetrisLevel::StateGameOver()
+{
+    RequestShowResult(EResult::fail);
+    RequestChangeLevel((int)LevelType::GameResult);
 }
 
 int TetrisLevel::GetGhostY() const
 {
-	int ghostY = player->GetOffsetY();
-
-	while (board->CanPlace(
-		player->GetPieceType(),
-		player->GetRotation(),
-		player->GetOffsetX(),
-		ghostY + 1))
-	{
-		ghostY++;
-	}
-
-	return ghostY;
+    int ghostY = player->GetOffsetY();
+    while (board->CanPlace(player->GetPieceType(), player->GetRotation(), player->GetOffsetX(), ghostY + 1))
+    {
+        ghostY++;
+    }
+    return ghostY;
 }
