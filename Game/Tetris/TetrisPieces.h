@@ -17,7 +17,8 @@ enum class PieceType
     L,
     J,
     S,
-    Z
+    Z,
+    DUMMY,
 };
 
 struct PieceInfo

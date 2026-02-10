@@ -17,9 +17,8 @@ class SpotTheDifferenceLevel : public Level
 	{
 		Vector2 pos;
 		Vector2 topLeft;
-		Vector2 size;
 
-		void Init(Vector2 topLeft, Vector2 size);
+		void Init(Vector2 topLeft);
 		void Move(int dx, int dy);
 		void Tick(float deltaTime, Input* input);
 	};
@@ -52,14 +51,15 @@ private:
 	UIColorEffect* colorEffectUI = nullptr;
 
 	// Paint
-	Vector2 paintSize;
 	std::vector<std::pair<std::string, std::string>> paints;
 	std::string* paintStr = nullptr;
 	std::string* paintStr2 = nullptr;
-	std::vector<int> lineLengths;
 
 private:
 	Cursor cursor;
 	Timer timer;
 	int answerCount = 20;
+	int totalWidth = 0;
+	int startXPos = 0;
+	int rightStartXPos = 0;
 };

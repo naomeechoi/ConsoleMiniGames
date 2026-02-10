@@ -19,9 +19,9 @@ private:
 	void DrawStarStr();
 
 private:
-	std::string mainStr;
+	std::vector<std::pair<std::string, int>> mainStrLines;
 	bool isDrawn = false;
-	int startStrWidth = 0;
-	int startStrHeight = 0;
+	int width = 0;
+	int height = 0;
 };
 

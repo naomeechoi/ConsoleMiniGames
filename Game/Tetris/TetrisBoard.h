@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <optional>
 
 constexpr int BOARD_WIDTH = 10;
 constexpr int BOARD_HEIGHT = 20;
@@ -78,5 +79,19 @@ private:
 
     bool isClearing = false;
     std::vector<int> clearingLines;
+
+public:
+    float GetScoreWhenPlacePiece(PieceType type,
+        int rotation,
+        int offsetX,
+        int offsetY);
+
+    std::optional<int> ConsumeCleanLineCount();
+    void AddLine(int count);
+
+    void AddOneLine();
+
+private:
+    std::optional<int> cleanCount;
 
 };

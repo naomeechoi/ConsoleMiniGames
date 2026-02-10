@@ -45,8 +45,8 @@ CardMonteLevel::~CardMonteLevel()
 
     if (colorEffectUI)
     {
-        delete messageUI;
-        messageUI = nullptr;
+        delete colorEffectUI;
+        colorEffectUI = nullptr;
     }
 
     if (messageUI)
@@ -105,7 +105,7 @@ void CardMonteLevel::BeginPlay()
 
     // 멤버 변수인 message를 직접 수정하지 말고 지역 변수 생성
     std::string finalMessage = message + std::to_string(answer);
-    messageUI->Start(displaySize.x, Vector2(3, displaySize.y - MESSAGE_UI_OFFSET_X), finalMessage, " ");
+    messageUI->Start(displaySize.x - 2, Vector2(3, displaySize.y - MESSAGE_UI_OFFSET_X), finalMessage, " ");
     // 시작
     ChangeState(&CardMonteLevel::StateShowing, showingTime);
 }
@@ -167,11 +167,11 @@ void CardMonteLevel::Draw()
 
         Color bgColor = Color::Black;
         // 디버깅용으로 빨간색 표시
-        if (curState == &CardMonteLevel::StateChoose)
+        /*if (curState == &CardMonteLevel::StateChoose)
         {
             if ((mode->Check(cards[i].num)))
                 bgColor = Color::Red;
-        }
+        }*/
 
         Renderer::Get().SubmitMultiLine(
             cardSprite.c_str(),

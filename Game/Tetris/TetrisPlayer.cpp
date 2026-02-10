@@ -25,8 +25,8 @@ void TetrisPlayer::Tick(float deltaTime, Input* input)
 void TetrisPlayer::Draw()
 {
     // next 작은 블록 그리기
-
     DrawNextPieces();
+    DrawHoldPiece();
 
     const auto& piece = g_PieceInfo[(int)type];
 
@@ -92,6 +92,45 @@ void TetrisPlayer::DrawNextPieces()
 
             Renderer::Get().SubmitMultiLine(smallBrick, pos, piece.color, piece.color, 0);
         }
+    }
+}
+
+void TetrisPlayer::DrawHoldPiece()
+{
+    int boxWidth = 12;
+    int boxHeight = 6;
+
+    const auto& piece = g_PieceInfo[(int)holdPiece];
+
+    // 1. 블록의 실제 차지 범위 계산 (중앙 정렬용)
+    int minX = 99, maxX = -99, minY = 99, maxY = -99;
+    for (int j = 0; j < 4; j++)
+    {
+        int bx = piece.blocks[0][j].x;
+        int by = piece.blocks[0][j].y;
+        if (bx < minX) minX = bx; if (bx > maxX) maxX = bx;
+        if (by < minY) minY = by; if (by > maxY) maxY = by;
+    }
+
+    // 2. 블록의 실제 출력 크기
+    int pieceWidth = (maxX - minX + 1) * smallBrickXSize;
+    int pieceHeight = (maxY - minY + 1) * smallBrickYSize;
+
+    // 3. 박스 내 중앙 시작점 계산 (여백을 반으로 나눔)
+    float centerXOffset = (boxWidth - pieceWidth) / 2.0f;
+    float centerYOffset = (boxHeight - pieceHeight) / 2 + (boxHeight - pieceHeight) % 2;
+
+    float boxX = worldStartPos.x + 42;
+    float boxY = worldStartPos.y + 42 - 8;
+
+    for (int j = 0; j < 4; j++)
+    {
+        Vector2 pos;
+        // (블록 좌표 - 최소값)을 해서 0부터 시작하게 만든 뒤, 중앙 오프셋을 더함
+        pos.x = boxX + centerXOffset + (piece.blocks[0][j].x - minX) * smallBrickXSize;
+        pos.y = boxY + centerYOffset + (piece.blocks[0][j].y - minY) * smallBrickYSize;
+
+        Renderer::Get().SubmitMultiLine(smallBrick, pos, piece.color, piece.color, 0);
     }
 }
 
@@ -184,4 +223,15 @@ PieceType TetrisPlayer::GetNextPiece()
 	PieceType nextPiece = pieceQueue.front();
 	pieceQueue.pop_front();
     return nextPiece;
+}
+
+void TetrisPlayer::SetHoldPiece()
+{
+	PieceType prevHopdPiece = holdPiece;
+    holdPiece = type;
+
+    if (prevHopdPiece != PieceType::EMPTY)
+    {
+        pieceQueue.push_front(prevHopdPiece);
+    }
 }

@@ -14,7 +14,7 @@ void UIMessage::Draw()
         pos,
         Color::White,
         Color::Black,
-        1
+        0
     );
 }
 
@@ -22,12 +22,15 @@ void UIMessage::Start(int totalWidth, Vector2 position, std::string levelStr, st
 {
     int padding = (totalWidth - (int)levelStr.size()) / 2 - (int)prefixStr.size() - position.x;
     message = prefixStr + std::string(padding, ' ') + levelStr;
-    pos.y = position.y;
+    pos = position;
 }
 
 
 
 void UIMessage::Clear()
 {
+    if(message.empty())
+		return;
+
     message.clear();
 }

@@ -22,26 +22,27 @@
 const int UI_START_POS_X = 3;
 const int UI_START_POS_Y = 2;
 const int UI_BOTTOM_OFFSET_Y = 3;
-const float PLAYTIME = 30.0f; // TODO: 외부에서 플레이 시간 받 수 있게 수정
+const float PLAYTIME = 60.0f; // TODO: 외부에서 플레이 시간 받 수 있게 수정
 const float BLANK_TIME = 1.0f;
 const int BLANK_COUNT = 5;
 const int DRAW_START_Y = 4;
 const int GAP_BETWEEN_PAINT = 6;
-const int PAINT_SIZE = 2;
+const int PAINT_SIZE = 4;
+const int PAINT_WIDTH = 65;
+const int PAINT_HEIGHT = 41;
 
-void SpotTheDifferenceLevel::Cursor::Init(Vector2 topLeft, Vector2 size)
+void SpotTheDifferenceLevel::Cursor::Init(Vector2 topLeft)
 {
 	pos = topLeft;
 	this->topLeft = topLeft;
-	this->size = size;
 }
 
 void SpotTheDifferenceLevel::Cursor::Move(int dx, int dy)
 {
 	int x = pos.x + dx;
 	int y = pos.y + dy;
-	x = std::clamp(x, topLeft.x, topLeft.x + size.x - 1);
-	y = std::clamp(y, topLeft.y, topLeft.y + size.y - 1);
+	x = std::clamp(x, topLeft.x, topLeft.x + PAINT_WIDTH - 1);
+	y = std::clamp(y, topLeft.y, topLeft.y + PAINT_HEIGHT - 1);
 	pos.x = x;
 	pos.y = y;
 }
@@ -84,6 +85,7 @@ void SpotTheDifferenceLevel::BeginPlay()
 {
 	if (hasBeganPlay)
 		return;
+	hasBeganPlay = true;
 
 	if (!mode)
 		mode = new SpotTheDifferenceMode();
@@ -94,9 +96,13 @@ void SpotTheDifferenceLevel::BeginPlay()
 	int showingPaint = Random::Random(0, PAINT_SIZE - 1);
 	paintStr = &paints[showingPaint].first;
 	paintStr2 = &paints[showingPaint].second;
-	MakeDifferences();
+	*paintStr2 = *paintStr;
 
-	hasBeganPlay = true;
+	totalWidth = PAINT_WIDTH * 2 + GAP_BETWEEN_PAINT;
+	startXPos = (displaySize.x - totalWidth) / 2;
+	rightStartXPos = startXPos + PAINT_WIDTH + GAP_BETWEEN_PAINT;
+
+	MakeDifferences();
 
 	int uiBottomY = displaySize.y - UI_BOTTOM_OFFSET_Y;
 
@@ -204,19 +210,22 @@ void SpotTheDifferenceLevel::Draw()
 	DrawPaint();
 
 	// 커서 위치 배경 바꾸기
-	char ch = (*paintStr2)[GetIndexAtPos(cursor.pos)];
-	char cursorChar[2] = { ch, '\0' };
+	int cursorIdx = GetIndexAtPos(cursor.pos);
+	if (cursorIdx != -1)
+	{
+		char ch = (*paintStr2)[GetIndexAtPos(cursor.pos)];
+		char cursorChar[2] = { ch, '\0' };
 
-	Renderer::Get().Submit(
-		cursorChar,
-		cursor.pos,
-		Color::Black,
-		Color::White,
-		999
-	);
+		Renderer::Get().Submit(
+			cursorChar,
+			cursor.pos,
+			Color::Black,
+			Color::White,
+			999
+		);
+	}
 
-	const int totalWidth = paintSize.x * 2 + GAP_BETWEEN_PAINT;
-	Vector2 paint1StartPos((displaySize.x - totalWidth) / 2, DRAW_START_Y);
+	Vector2 paint1StartPos(startXPos, DRAW_START_Y);
 
 	for (int idx : mode->GetUserAnswer())
 	{
@@ -257,27 +266,27 @@ void SpotTheDifferenceLevel::LoadText()
 		}
 
 		std::string tempStr;
-		tempStr.assign((std::istreambuf_iterator<char>(file)),
-			std::istreambuf_iterator<char>());
-
-		// CR 제거
-		tempStr.erase(
-			std::remove(tempStr.begin(), tempStr.end(), '\r'),
-			tempStr.end()
-		);
-
-		// paintSize 계산
-		paintSize = Vector2(0, 0);
-		lineLengths.clear();
-
 		std::string line;
-		std::istringstream iss(tempStr);
-		while (std::getline(iss, line))
-		{
-			paintSize.x = std::max(paintSize.x, (int)line.size());
-			++paintSize.y;
 
-			lineLengths.push_back((int)line.size());
+		while (std::getline(file, line))
+		{
+			line.erase(
+				std::remove(line.begin(), line.end(), '\r'),
+				line.end()
+			);
+
+			if (line.size() > PAINT_WIDTH)
+			{
+				line = line.substr(0, PAINT_WIDTH);
+			}
+
+			else if (line.size() < PAINT_WIDTH)
+			{
+				line.append(PAINT_WIDTH - line.size(), ' ');
+			}
+
+			tempStr += line;
+			tempStr += '\n';
 		}
 
 		std::pair<std::string, std::string> paintPair = { tempStr, tempStr };
@@ -300,10 +309,6 @@ void SpotTheDifferenceLevel::MakeDifferences()
 
 		differencesSet.insert(random);
 	}
-
-	const int totalWidth = paintSize.x * 2 + GAP_BETWEEN_PAINT;
-	const int startX = (displaySize.x - totalWidth) / 2;
-	const int rightStartX = startX + paintSize.x + GAP_BETWEEN_PAINT;
 
 	std::unordered_set<Vector2> debugSet;
 	std::unordered_set<int> answerSet;
@@ -331,11 +336,12 @@ void SpotTheDifferenceLevel::MakeDifferences()
 		}
 
 		// 화면 좌표로 변환
-		debugSet.insert({ x + rightStartX, y + DRAW_START_Y });
+		debugSet.insert({ x + rightStartXPos, y + DRAW_START_Y });
 		answerSet.insert(difference);
 	}
 
-	cursor.Init(Vector2(rightStartX, DRAW_START_Y), paintSize);
+	cursor.Init(Vector2(rightStartXPos, DRAW_START_Y));
+	//디버그 보고 싶으면 주석 해제
 	Renderer::Get().SetDebugMode(debugSet);
 
 	if (mode)
@@ -344,21 +350,17 @@ void SpotTheDifferenceLevel::MakeDifferences()
 
 void SpotTheDifferenceLevel::DrawPaint()
 {
-	const int totalWidth = paintSize.x * 2 + GAP_BETWEEN_PAINT;
-
-	const int startX = (displaySize.x - totalWidth) / 2;
-
 	// 왼쪽 그림
 	Renderer::Get().SubmitMultiLine(
 		(*paintStr).c_str(),
-		Vector2(startX, DRAW_START_Y),
+		Vector2(startXPos, DRAW_START_Y),
 		Color::Green
 	);
 
 	// 오른쪽 그림
 	Renderer::Get().SubmitMultiLine(
 		(*paintStr2).c_str(),
-		Vector2(startX + paintSize.x + GAP_BETWEEN_PAINT, DRAW_START_Y),
+		Vector2(startXPos + PAINT_WIDTH + GAP_BETWEEN_PAINT, DRAW_START_Y),
 		Color::Green
 	);
 
@@ -370,40 +372,24 @@ int SpotTheDifferenceLevel::GetIndexAtPos(Vector2 pos) const
 	int localX = pos.x - cursor.topLeft.x;
 	int localY = pos.y - cursor.topLeft.y;
 
-	if (localY < 0 || localY >= (int)lineLengths.size())
+	if (localX < 0 || localX >= PAINT_WIDTH)
 		return -1;
 
-	if (localX < 0 || localX >= lineLengths[localY])
+	if (localY < 0 || localY >= PAINT_HEIGHT)
 		return -1;
 
-	int idx = 0;
-	for (int i = 0; i < localY; i++)
-		idx += lineLengths[i] + 1;
-
-	return idx + localX;
+	// 한 줄 = 65 + '\n'
+	return localY * (PAINT_WIDTH + 1) + localX;
 }
 
 Vector2 SpotTheDifferenceLevel::GetPosAtIndex(int idx, Vector2 topLeft) const
 {
-	int x = 0;
-	int y = 0;
-	for (int i = 0; i < idx; i++)
-	{
-		if ((*paintStr2)[i] == '\n')
-		{
-			y++;
-			x = 0;
-		}
-		else
-		{
-			x++;
-		}
-	}
+	int lineWidth = PAINT_WIDTH + 1;
 
-	return Vector2(
-		topLeft.x + x,
-		topLeft.y + y
-	);
+	int y = idx / lineWidth;
+	int x = idx % lineWidth;
+
+	return Vector2(topLeft.x + x, topLeft.y + y);
 }
 
 bool SpotTheDifferenceLevel::ValidCheck()

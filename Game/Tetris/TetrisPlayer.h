@@ -8,12 +8,11 @@ class TetrisPlayer
 {
 public:
 	TetrisPlayer(MinigameEngine::Vector2 worldStartPos);
-	~TetrisPlayer();
+	virtual ~TetrisPlayer();
 
     void BeginPlay();
     void Tick(float deltaTime, MinigameEngine::Input* input);
     void Draw();
-    void DrawNextPieces();
     void DrawGhost(int ghostOffSetY);
     void Clear();
 
@@ -33,6 +32,11 @@ public:
     void SetRotation(int rotation);
     void InsertPieceQueue(PieceType t);
     PieceType GetNextPiece();
+	void SetHoldPiece();
+
+private:
+    void DrawNextPieces();
+    void DrawHoldPiece();
 
 private:
     PieceType type;
@@ -42,6 +46,7 @@ private:
     int offsetY = -1;
 
 	std::deque<PieceType> pieceQueue;
+	PieceType holdPiece = PieceType::EMPTY;
 
     MinigameEngine::Vector2 worldStartPos;
 };

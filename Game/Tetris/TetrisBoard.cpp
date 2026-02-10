@@ -1,6 +1,7 @@
 #include "TetrisBoard.h"
 #include "Math/Vector2.h"
 #include "Render/Renderer.h"
+#include "Util/Random.h"
 
 #include <iostream>
 #include <string>
@@ -104,6 +105,11 @@ void TetrisBoard::Draw()
                 drawColor = Color::Black;
             }
 
+            if (grid[y][x].type == PieceType::DUMMY)
+            {
+                drawColor = Color::White;
+            }
+
             Renderer::Get().SubmitMultiLine(
                 brick,
                 pos,
@@ -142,7 +148,7 @@ bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
     const auto& piece = g_PieceInfo[(int)type];
 
     // I L 같은 요소를 위해 2칸까지 위로 올려봄
-    for (int yOffset = 0; yOffset >= -2; --yOffset)
+    for (int yOffset = 0; yOffset >= -2; yOffset--)
     {
         int outOfBoundaryCount = 0;
         bool collision = false;
@@ -332,8 +338,49 @@ void TetrisBoard::ClearLines(float deltaTime)
         lineFlashTimers[y] = 0.0f;
     }
 
+	cleanCount = (int)clearingLines.size();
+
     isClearing = false;
     clearingLines.clear();
+}
+
+
+std::optional<int> TetrisBoard::ConsumeCleanLineCount()
+{
+    auto temp = cleanCount;
+    cleanCount.reset();
+    return temp;
+}
+
+void TetrisBoard::AddLine(int count)
+{
+    for (int c = 0; c < count; ++c)
+    {
+        AddOneLine();
+    }
+}
+
+void TetrisBoard::AddOneLine()
+{
+    std::array<Cell, BOARD_WIDTH> tempRow;
+    int emptyCell = Random::Random(0, BOARD_WIDTH - 1);
+    for (int x = 0; x < BOARD_WIDTH; ++x)
+    {
+        if (x == emptyCell)
+        {
+            tempRow[x].type = PieceType::EMPTY;
+        }
+        else
+        {
+            tempRow[x].type = PieceType::DUMMY;
+        }
+    }
+
+    for (int i = 0; i < BOARD_HEIGHT - 1; i++)
+    {
+        grid[i] = grid[i + 1];
+    }
+    grid[BOARD_HEIGHT - 1] = tempRow;
 }
 
 void TetrisBoard::LoadEdgeTxt()
@@ -377,3 +424,143 @@ bool TetrisBoard::CheckOutOfBoundary(int x, int y)
 
     return true;
 }
+
+float TetrisBoard::GetScoreWhenPlacePiece(PieceType type, int rotation, int ox, int oy)
+{
+    std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> originalGrid = grid;
+    std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> testGrid = grid;
+
+    float result = 0.0f;
+
+    // 가상으로 채워넣기
+    const auto& piece = g_PieceInfo[(int)type];
+    for (int i = 0; i < BLOCK_COUNT; ++i)
+    {
+        int x = ox + piece.blocks[rotation][i].x;
+        int y = oy + piece.blocks[rotation][i].y;
+
+        if (!CheckOutOfBoundary(x, y))
+            return result;
+        
+        testGrid[y][x].type = type;
+    }
+
+    // 1. 블록 높이의 합
+    float height = 0;
+    for (int i = 0; i < BOARD_WIDTH; i++)
+    {
+        for(int j = 0; j < BOARD_HEIGHT; j++)
+        {
+            if(testGrid[j][i].type != PieceType::EMPTY)
+            {
+                height += (BOARD_HEIGHT - j);
+                break;
+            }
+		}
+    }
+    result += height * (-3.78f);
+
+    // 2. 머리 위는 막혀 있고 나는 구멍일 때
+    float emptyCells = 0;
+    for (int i = BOARD_HEIGHT - 1; i >= 1; i--)
+    {
+        for (int j = 0; j < BOARD_WIDTH; j++)
+        {
+            if (testGrid[i][j].type == PieceType::EMPTY
+                && testGrid[i-1][j].type != PieceType::EMPTY)
+            {
+                emptyCells++;
+            }
+        }
+    }
+    result += emptyCells * (-8.8f);
+
+    // 3. 구멍 위에 있는 셀의 수
+    float coveredCells = 0;
+    for (int i = 0; i < BOARD_WIDTH; i++)
+    {
+        int curCount = 0;
+       for(int j = 0; j < BOARD_HEIGHT - 1; j++)
+       {
+           if (testGrid[j][i].type != PieceType::EMPTY)
+           {
+               curCount++;
+           }
+           else
+           {
+			   coveredCells += curCount;
+               curCount = 0;
+           }
+	   }
+    }
+    result += coveredCells * (-0.59f);
+
+    // 4. 완성된 줄의 개수
+    float completeLine = 0;
+    for (int i = 0; i < BOARD_HEIGHT; i++)
+    {
+        bool isComplete = true;
+        for (int j = 0; j < BOARD_WIDTH; j++)
+        {
+            if (testGrid[i][j].type == PieceType::EMPTY)
+            {
+                isComplete = false;
+                break;
+            }
+        }
+        if (isComplete)
+            completeLine++;
+    }
+    result += completeLine * 8.2f;
+
+    // 5. 현재 블록이 좌우 벽면과 닿는 면의 개수
+    // 6. 현재 블록이 바닥면과 닿는 개수
+    std::vector<std::vector<int>> offsets = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
+
+    float countTouchingSides = 0;
+    float countTouchingBottom = 0;
+    for (int i = 0; i < BLOCK_COUNT; ++i)
+    {
+        int x = ox + piece.blocks[rotation][i].x;
+        int y = oy + piece.blocks[rotation][i].y;
+        for (int j = 0; j < (int)offsets.size(); j++)
+        {
+			int newX = x + offsets[j][0];
+			int newY = y + offsets[j][1];
+            if (newX == -1 || newX == BOARD_WIDTH)
+            {
+                countTouchingSides++;
+            }
+
+            if (newY == BOARD_HEIGHT)
+            {
+                countTouchingBottom++;
+            }
+        }
+    }
+    result += countTouchingSides * 2.5f;
+    result += countTouchingBottom * 4.0f;
+
+    // 7. 현재 블록이 기존 블록들과 닿는 개수
+    float countTouchingOthers = 0;
+    for (int i = 0; i < BLOCK_COUNT; ++i)
+    {
+        int x = ox + piece.blocks[rotation][i].x;
+        int y = oy + piece.blocks[rotation][i].y;
+        for (int j = 0; j < (int)offsets.size(); j++)
+        {
+            int newX = x + offsets[j][0];
+            int newY = y + offsets[j][1];
+            if(newX < 0 || newX >= BOARD_WIDTH || newY < 0 || newY >= BOARD_HEIGHT)
+				continue;
+            if (originalGrid[newY][newX].type != PieceType::EMPTY)
+            {
+                countTouchingOthers++;
+			}
+        }
+    }
+    result += countTouchingOthers * 3.7f;
+
+	return result;
+}
+

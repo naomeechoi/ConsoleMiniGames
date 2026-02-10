@@ -41,6 +41,7 @@ void StartLevel::Draw()
 
 void StartLevel::LoadText()
 {
+	std::string mainStr;
 	std::ifstream file("../Assets/Main.txt", std::ios::binary);
 	if (!file.is_open())
 	{
@@ -57,25 +58,54 @@ void StartLevel::LoadText()
 		mainStr.end()
 	);
 
-	// width/height 계산을 따로 하려면 아래처럼
-	startStrWidth = 0;
-	startStrHeight = 0;
-	std::string line;
-	std::istringstream iss(mainStr);
-	while (std::getline(iss, line))
+	std::string temp;
+	size_t start = 0;
+	size_t pos = 0;
+
+	while((pos = mainStr.find('7', start)) != std::string::npos)
 	{
-		startStrWidth = std::max(startStrWidth, (int)line.size());
-		++startStrHeight;
+		int tempHeight = 0;
+
+		size_t lineStart = start;
+		size_t lineEnd;
+		while ((lineEnd = mainStr.find('\n', lineStart)) != std::string::npos && lineEnd < pos)
+		{
+			int len = (int)(lineEnd - lineStart);
+			width = std::max(width, len);
+			tempHeight++;
+			lineStart = lineEnd + 1;
+		}
+
+		if (lineStart < pos)
+		{
+			int len = (int)(pos - lineStart);
+			width = std::max(width, len);
+			tempHeight++;
+		}
+
+		height += tempHeight;
+		temp = mainStr.substr(start, pos - start);
+		mainStrLines.push_back(make_pair(temp, tempHeight));
+		start = pos + 1;
 	}
 }
 
 void StartLevel::DrawStarStr()
 {
-	int startX = (displaySize.x - startStrWidth) / 2;
-	int startY = (displaySize.y - startStrHeight) / 2;
-	Renderer::Get().SubmitMultiLine(
-		mainStr.c_str(),
-		Vector2(startX, startY),
-		Color::Green
-	);
+	int startX = (displaySize.x - width) / 2;
+	int startY = (displaySize.y - height) / 2;
+	for(int i = 0; i < (int)mainStrLines.size(); i++)
+	{
+		Color color = Color::Green;
+		if (i == 1 || i == 2)
+		{
+			color = Color::Cyan;
+		}
+		Renderer::Get().SubmitMultiLine(
+			mainStrLines[i].first.c_str(),
+			Vector2(startX, startY),
+			color
+		);
+		startY += mainStrLines[i].second;
+	}
 }
