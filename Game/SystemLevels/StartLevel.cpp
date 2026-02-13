@@ -2,7 +2,7 @@
 #include "StartLevel.h"
 #include "Util/Console.h"
 #include "Util/Color.h"
-#include "Common/LevelType.h"
+#include "Common/Common.h"
 #include "System/Input.h"
 #include "World/Actor.h"
 #include "Render/Renderer.h"

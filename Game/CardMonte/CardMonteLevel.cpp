@@ -3,7 +3,7 @@
 #include "CardMonteMode.h"
 #include "Render/Renderer.h"
 #include "System/Input.h"
-#include "Common/LevelType.h"
+#include "Common/Common.h"
 #include "UI/UITop.h"
 #include "UI/UILoadingBar.h"
 #include "UI/UIColorEffect.h"
@@ -15,8 +15,6 @@
 #include <algorithm>
 
 const int CARD_LEFT_X_OFFSET = 10;
-const int UI_START_POS_X = 3;
-const int UI_START_POS_Y = 2;
 const int UI_BOTTOM_OFFSET_Y = 3;
 const float BLANK_TIME = 4.0f;
 const int BLANK_COUNT = 20;

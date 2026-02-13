@@ -179,7 +179,7 @@
   <ItemGroup>
     <ClInclude Include="CardMonte\CardMonteLevel.h" />
     <ClInclude Include="CardMonte\CardMonteMode.h" />
-    <ClInclude Include="Common\LevelType.h" />
+    <ClInclude Include="Common\Common.h" />
     <ClInclude Include="Game\Game.h" />
     <ClInclude Include="SystemLevels\GameResultLevel.h" />
     <ClInclude Include="SystemLevels\LoadingLevel.h" />

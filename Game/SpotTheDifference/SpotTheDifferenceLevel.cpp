@@ -8,7 +8,7 @@
 #include "UI/UIColorEffect.h"
 #include "Math/Vector2.h"
 #include "System/Input.h"
-#include "Common/LevelType.h"
+#include "Common/Common.h"
 #include "World/Actor.h"
 #include "Render/Renderer.h"
 #include "Util/Random.h"
@@ -19,8 +19,6 @@
 #include <algorithm>
 #include <Util/Delete.h>
 
-const int UI_START_POS_X = 3;
-const int UI_START_POS_Y = 2;
 const int UI_BOTTOM_OFFSET_Y = 3;
 const float PLAYTIME = 60.0f; // TODO: 외부에서 플레이 시간 받 수 있게 수정
 const float BLANK_TIME = 1.0f;

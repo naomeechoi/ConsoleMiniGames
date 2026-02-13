@@ -1,5 +1,5 @@
 #include "GameResultLevel.h"
-#include "Common/LevelType.h"
+#include "Common/Common.h"
 #include "Util/Console.h"
 #include "Render/Renderer.h"
 #include "System/Input.h"

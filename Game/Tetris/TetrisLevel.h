@@ -14,20 +14,18 @@ class UIMessage;
 
 class TetrisLevel : public MinigameEngine::Level
 {
-    // 함수 포인터 정의 (CardMonte 방식)
     typedef void (TetrisLevel::* StateFunc)(float deltaTime, MinigameEngine::Input* input);
-    //typedef void (TetrisLevel::* AIStateFunc)(float deltaTime);
 
 public:
     TetrisLevel();
     virtual ~TetrisLevel();
 
-    virtual void BeginPlay() override;
     virtual void OnExit() override;
+    virtual void BeginPlay() override;
     void AIModeClear();
     virtual void Tick(float deltaTime, MinigameEngine::Input* input) override;
     void CheckAILose();
-    void GenerateFuturePiece();
+    void GenerateUpcomingPiece();
     virtual void Draw() override;
 
 private:

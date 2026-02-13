@@ -7,7 +7,7 @@
 #include "SpotTheDifference/SpotTheDifferenceLevel.h"
 #include "CardMonte/CardMonteLevel.h"
 #include "Tetris/TetrisLevel.h"
-#include "Common/LevelType.h"
+#include "Common/Common.h"
 
 Game* Game::instance = nullptr;
 Game* Game::Get() { return Game::instance; };

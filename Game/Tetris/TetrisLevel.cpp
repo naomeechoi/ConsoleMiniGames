@@ -2,7 +2,7 @@
 #include "TetrisPlayer.h"
 #include "TetrisAIMachine.h"
 #include "TetrisBoard.h"
-#include "Common/LevelType.h"
+#include "Common/Common.h"
 #include "System/Input.h"
 #include "TetrisRotationSystem.h"
 #include "Util/Random.h"
@@ -11,15 +11,15 @@
 #include "UI/UIMessage.h"
 #include <limits>
 
-const int UI_START_POS_X = 3;
-const int UI_START_POS_Y = 2;
-const int BOARD_DISPLAY_WIDTH = 20;
-const int BOARDS_DISPLAY_WIDTH = 55;
-const int BOARD_DISPLAY_HEIGHT = 42;
+const int BOARDS_WIDTH = 55;
+const int MAIN_BOARD_HEIGHT = 42;
 const int MAX_LOCK_MOVES = 15;
 const int PIECE_QUEUE_SIZE = 5;
 const float GRAVITY_TIME = 1.0f;
 const int MESSAGE_UI_OFFSET_X = 3;
+const std::string AI_USAGE_GUIDE = "Press F1 to toggle AI Battle Mode.";
+const float MOVE_INTERVAL = 0.05f;
+const float LOCK_DELAY_INTERVAL = 0.5f;
 
 TetrisLevel::TetrisLevel() : player(nullptr), board(nullptr), curState(nullptr) {}
 
@@ -33,20 +33,42 @@ TetrisLevel::~TetrisLevel()
     SafeDelete(messageUI);
 }
 
+void TetrisLevel::OnExit()
+{
+    hasBeganPlay = false;
+    if (board)
+        board->Clear();
+
+    if (player)
+        player->Clear();
+
+    if (messageUI)
+        messageUI->Clear();
+
+    curState = nullptr;
+    gravityTimer.Reset();
+    softDropTimer.Reset();
+    horizontalTimer.Reset();
+    lockDelayTimer.Reset();
+
+    lockMoveCount = 0;
+
+    // AI 상태 초기화
+    AIModeClear();
+}
+
 void TetrisLevel::BeginPlay()
 {
     if (hasBeganPlay)
         return;
 
-    hasBeganPlay = true;
-
-    int totalBoardWidth = BOARDS_DISPLAY_WIDTH * 2;
+    int totalBoardWidth = BOARDS_WIDTH * 2;
     int remainingSpace = displaySize.x - totalBoardWidth;
     int spacing = remainingSpace / 3;
 
     Vector2 startPos;
     startPos.x = spacing;
-    startPos.y = (displaySize.y - BOARD_DISPLAY_HEIGHT) / 2 + 1;
+    startPos.y = (displaySize.y - MAIN_BOARD_HEIGHT) / 2 + 1;
 
     if (!player)
         player = new TetrisPlayer(startPos);
@@ -54,7 +76,7 @@ void TetrisLevel::BeginPlay()
     if (!board)
         board = new TetrisBoard(startPos);
 
-    startPos.x += (BOARDS_DISPLAY_WIDTH + spacing);
+    startPos.x += (BOARDS_WIDTH + spacing);
 
     if (!aiMachine)
         aiMachine = new TetrisAIMachine(startPos, 0.5f);
@@ -69,18 +91,18 @@ void TetrisLevel::BeginPlay()
         RequestChangeLevel((int)LevelType::Menu);
         return;
     }
+    hasBeganPlay = true;
 
-    std::string finalMessage = "Press F1 to toggle AI Battle Mode.";
-    messageUI->Start(displaySize.x - 2, Vector2(3, displaySize.y - MESSAGE_UI_OFFSET_X), finalMessage, " ");
+    messageUI->Start(displaySize.x - 2, Vector2(UI_START_POS_X, displaySize.y - MESSAGE_UI_OFFSET_X), AI_USAGE_GUIDE, " ");
 
     // 타이머 초기 설정
     gravityTimer.SetTargetTime(GRAVITY_TIME);
-    softDropTimer.SetTargetTime(0.05f);
-    horizontalTimer.SetTargetTime(0.05f);
-    lockDelayTimer.SetTargetTime(0.5f); // 표준 0.5초 딜레이
+    softDropTimer.SetTargetTime(MOVE_INTERVAL);
+    horizontalTimer.SetTargetTime(MOVE_INTERVAL);
+    lockDelayTimer.SetTargetTime(LOCK_DELAY_INTERVAL);
     
     for (int i = 0; i < PIECE_QUEUE_SIZE; i++)
-        GenerateFuturePiece();
+        GenerateUpcomingPiece();
 
     SpawnNewPiece();
 }
@@ -142,7 +164,7 @@ void TetrisLevel::Tick(float deltaTime, MinigameEngine::Input* input)
         board->AddTrashLines(aiMachine->GetCleanCount());
     }
 
-    GenerateFuturePiece();
+    GenerateUpcomingPiece();
 
     CheckAILose();
 }
@@ -163,7 +185,7 @@ void TetrisLevel::CheckAILose()
     }
 }
 
-void TetrisLevel::GenerateFuturePiece()
+void TetrisLevel::GenerateUpcomingPiece()
 {
     PieceType futurePiece = (PieceType)Random::Random((int)PieceType::I, (int)PieceType::Z);
     player->InsertPieceQueue(futurePiece);
@@ -372,29 +394,6 @@ void TetrisLevel::Draw()
     aiMachine->Draw();
     topUI->Draw();
     messageUI->Draw();
-}
-
-void TetrisLevel::OnExit()
-{
-    hasBeganPlay = false;
-    if (board)
-        board->Clear();
-
-    if (player)
-        player->Clear();
-
-    curState = nullptr;
-    gravityTimer.Reset();
-    softDropTimer.Reset();
-    horizontalTimer.Reset();
-    lockDelayTimer.Reset();
-
-	lockMoveCount = 0;
-
-    // AI 상태 초기화
-    AIModeClear();
-
-    messageUI->Clear();
 }
 
 void TetrisLevel::AIModeClear()
