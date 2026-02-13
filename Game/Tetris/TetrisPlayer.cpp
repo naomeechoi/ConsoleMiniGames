@@ -168,6 +168,7 @@ void TetrisPlayer::Clear()
     offsetX = -1;
     offsetY = -1;
 
+	holdPiece = PieceType::EMPTY;
 	pieceQueue.clear();
 }
 

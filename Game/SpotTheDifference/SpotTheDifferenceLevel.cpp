@@ -342,7 +342,7 @@ void SpotTheDifferenceLevel::MakeDifferences()
 
 	cursor.Init(Vector2(rightStartXPos, DRAW_START_Y));
 	//디버그 보고 싶으면 주석 해제
-	Renderer::Get().SetDebugMode(debugSet);
+	//Renderer::Get().SetDebugMode(debugSet);
 
 	if (mode)
 		mode->SetAnswer(answerSet);
