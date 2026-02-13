@@ -5,7 +5,7 @@
 using namespace MinigameEngine;
 
 TetrisPlayer::TetrisPlayer(Vector2 worldStartPos)
-    :worldStartPos(worldStartPos)
+	:worldStartPos(worldStartPos)
 {
 }
 
@@ -213,7 +213,7 @@ void TetrisPlayer::SetRotation(int rotation)
 void TetrisPlayer::InsertPieceQueue(PieceType t)
 {
     if((int)pieceQueue.size() < 5)
-    pieceQueue.push_back(t);
+        pieceQueue.push_back(t);
 }
 
 PieceType TetrisPlayer::GetNextPiece()
@@ -235,4 +235,14 @@ void TetrisPlayer::SetHoldPiece()
     {
         pieceQueue.push_front(prevHopdPiece);
     }
+}
+
+void TetrisPlayer::SetPieceQueue(std::deque<PieceType> pieceQueue)
+{
+    this->pieceQueue = pieceQueue;
+}
+
+std::deque<PieceType> TetrisPlayer::GetPieceQueue()
+{
+    return pieceQueue;
 }

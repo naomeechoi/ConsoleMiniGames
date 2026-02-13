@@ -352,7 +352,7 @@ std::optional<int> TetrisBoard::ConsumeCleanLineCount()
     return temp;
 }
 
-void TetrisBoard::AddLine(int count)
+void TetrisBoard::AddTrashLines(int count)
 {
     for (int c = 0; c < count; ++c)
     {

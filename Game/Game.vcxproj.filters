@@ -75,7 +75,7 @@
     <ClCompile Include="Tetris\TetrisRotationSystem.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Tetris\TetrisAI.cpp">
+    <ClCompile Include="Tetris\TetrisAIMachine.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -140,7 +140,7 @@
     <ClInclude Include="Tetris\TetrisRotationSystem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Tetris\TetrisAI.h">
+    <ClInclude Include="Tetris\TetrisAIMachine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

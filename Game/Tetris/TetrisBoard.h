@@ -87,7 +87,7 @@ public:
         int offsetY);
 
     std::optional<int> ConsumeCleanLineCount();
-    void AddLine(int count);
+    void AddTrashLines(int count);
 
     void AddOneLine();
 

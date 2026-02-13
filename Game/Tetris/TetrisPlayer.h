@@ -33,6 +33,8 @@ public:
     void InsertPieceQueue(PieceType t);
     PieceType GetNextPiece();
 	void SetHoldPiece();
+    void SetPieceQueue(std::deque<PieceType> pieceQueue);
+    std::deque<PieceType> GetPieceQueue();
 
 private:
     void DrawNextPieces();
