@@ -8,7 +8,7 @@
 #include "UI/UIColorEffect.h"
 #include "Math/Vector2.h"
 #include "System/Input.h"
-#include "Common/Common.h"
+#include "Common/GameCommon.h"
 #include "World/Actor.h"
 #include "Render/Renderer.h"
 #include "Util/Random.h"

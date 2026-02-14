@@ -3,7 +3,7 @@
 #include "CardMonteMode.h"
 #include "Render/Renderer.h"
 #include "System/Input.h"
-#include "Common/Common.h"
+#include "Common/GameCommon.h"
 #include "UI/UITop.h"
 #include "UI/UILoadingBar.h"
 #include "UI/UIColorEffect.h"

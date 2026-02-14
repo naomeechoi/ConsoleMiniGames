@@ -1,17 +1,39 @@
 #include "TetrisAIMachine.h"
+#include "TetrisBoard.h"
+#include "TetrisPlayer.h"
 #include <cassert>
+#include <limits>
 
-const float GRAVITY_TIME = 1.0f;
-const float ACTION_TICK = 0.07f;
-
-TetrisAIMachine::TetrisAIMachine(Vector2 worldPos, float lockTime)
-	:worldPos(worldPos), lockTime(lockTime)
+namespace
 {
-    aiBoard = new TetrisBoard(worldPos);
+    constexpr float GRAVITY_TIME = 1.0f;
+    constexpr float ACTION_TICK = 0.07f;
+}
+
+using namespace MinigameEngine;
+using std::deque;
+using std::optional;
+using std::numeric_limits;
+
+TetrisAIMachine::TetrisAIMachine(Vector2 worldPosition, float lockTime)
+	:worldPosition(worldPosition), lockTime(lockTime)
+{
+    aiBoard = new TetrisBoard(worldPosition);
 }
 
 TetrisAIMachine::~TetrisAIMachine()
 {
+    if(aiPlayer)
+    {
+        delete aiPlayer;
+        aiPlayer = nullptr;
+    }
+
+    if (aiBoard)
+    {
+        delete aiBoard;
+        aiBoard = nullptr;
+    }
 }
 
 void TetrisAIMachine::Clear()
@@ -24,21 +46,24 @@ void TetrisAIMachine::Clear()
     aiCurState = nullptr;
     aiOneMoveTimer.Reset();
     aiLockDelayTimer.Reset();
+    aiDyingTermTimer.Reset();
     isPlaying = false;
 }
 
-void TetrisAIMachine::BeginPlay(std::deque<PieceType> pieceQueue)
+void TetrisAIMachine::BeginPlay(deque<PieceType> pieceQueue)
 {
     if (!aiPlayer)
-        aiPlayer = new TetrisPlayer(worldPos);
+        aiPlayer = new TetrisPlayer(worldPosition);
 
-    if (!ValidCheck()) {
+    if (!ValidCheck())
+    {
         return;
     }
 
     aiPlayer->SetPieceQueue(pieceQueue);
     isPlaying = true;
     aiLockDelayTimer.SetTargetTime(0.5f); // 표준 0.5초 딜레이
+    aiDyingTermTimer.SetTargetTime(0.5f); // 표준 0.5초 딜레이
     SpawnAINewPiece();
 }
 
@@ -64,10 +89,9 @@ void TetrisAIMachine::Draw()
 
 bool TetrisAIMachine::ValidCheck()
 {
-    if (!aiPlayer
-        || !aiBoard)
+    if (!aiPlayer || !aiBoard)
     {
-		assert("TetrisAI ValidCheck failed");
+		assert(false && "TetrisAI ValidCheck failed");
         return false;
     }
 
@@ -81,15 +105,9 @@ void TetrisAIMachine::AddTrashLines(int count)
 
 int TetrisAIMachine::GetCleanCount()
 {
-    int cleanCount = 0;
     if (auto cleanSize = aiBoard->ConsumeCleanLineCount())
-        cleanCount = *cleanSize;
-    return cleanCount;
-}
-
-void TetrisAIMachine::SynclonizeSpawnPieceWithPlayer(PieceType piece)
-{
-    aiPlayer->InsertPieceQueue(piece);
+        return *cleanSize;
+    return 0;
 }
 
 void TetrisAIMachine::InsertPieceToQueue(PieceType piece)
@@ -108,18 +126,13 @@ void TetrisAIMachine::SpawnAINewPiece()
 
     if (!aiBoard->GetSpawnPos(nextType, sx, sy, sr))
     {
-        AIChangeState(&TetrisAIMachine::AIStateGameOver);
+        ChangeAIState(&TetrisAIMachine::AIStateGameOver);
         return;
     }
 
-    if (!AIFindBestPos(nextType, sx, sy, sr))
-    {
-        AIChangeState(&TetrisAIMachine::AIStateGameOver);
-        return;
-    }
-
+    FindBestPosition(nextType, sx, sy, sr);
     aiPlayer->Spawn(nextType, sx, sy, sr);
-    AIChangeState(&TetrisAIMachine::AIStateFalling);
+    ChangeAIState(&TetrisAIMachine::AIStateFalling);
     aiOneMoveTimer.Reset();
     aiOneMoveTimer.SetTargetTime(aiOneMoveTime);
 }
@@ -127,18 +140,20 @@ void TetrisAIMachine::SpawnAINewPiece()
 
 ///////////////////////////////////////////////////////////////////////////////
 // AI 관련 함수
-bool TetrisAIMachine::AIFindBestPos(PieceType type, int x, int y, int rot)
+bool TetrisAIMachine::FindBestPosition(PieceType type, int x, int y, int rot)
 {
-    float maxScore = std::numeric_limits<float>::lowest();
+    float maxScore = numeric_limits<float>::lowest();
     int bestX = x;
     int bestY = y;
     int bestRot = rot;
-    bool foundAny = false;
+
+    constexpr int HORIZONTAL_MARGIN = 3;
+    constexpr int Y_OFFSET_START = -2;
     for (int tryRot = 0; tryRot < ROTATION_COUNT; tryRot++)
     {
-        for (int tryXOffset = -3; tryXOffset < BOARD_WIDTH + 3; tryXOffset++)
+        for (int tryXOffset = HORIZONTAL_MARGIN * (-1); tryXOffset < BOARD_WIDTH + HORIZONTAL_MARGIN; tryXOffset++)
         {
-            int tryY = -2;
+            int tryY = Y_OFFSET_START;
             if (!aiBoard->CanPlace(type, tryRot, tryXOffset, tryY))
                 continue;
 
@@ -147,9 +162,6 @@ bool TetrisAIMachine::AIFindBestPos(PieceType type, int x, int y, int rot)
                 tryY++;
             }
 
-            if (tryY < 0)
-                continue;
-
             float curScore = aiBoard->GetScoreWhenPlacePiece(type, tryRot, tryXOffset, tryY);
             if (curScore > maxScore)
             {
@@ -157,18 +169,14 @@ bool TetrisAIMachine::AIFindBestPos(PieceType type, int x, int y, int rot)
                 bestX = tryXOffset;
                 bestY = tryY;
                 bestRot = tryRot;
-                foundAny = true;
             }
         }
     }
 
-    if (!foundAny)
-        return false;
-
-    return AIGetBehaveSequence(bestX, bestY, bestRot, x, y, rot);
+    return GetBehaveSequence(bestX, bestY, bestRot, x, y, rot);
 }
 
-bool TetrisAIMachine::AIGetBehaveSequence(int bestX, int bestY, int bestRot, int x, int y, int rot)
+bool TetrisAIMachine::GetBehaveSequence(int bestX, int bestY, int bestRot, int x, int y, int rot)
 {
     aiBehaviorSequence.clear();
 
@@ -176,13 +184,13 @@ bool TetrisAIMachine::AIGetBehaveSequence(int bestX, int bestY, int bestRot, int
     int currentY = y;
     int currentRot = rot;
 
-    if (bestY - currentY <= 0)
+    if (bestY < currentY)
         return false;
 
     // 회전 동작 추가
     while (currentRot != bestRot)
     {
-        aiBehaviorSequence.push_back(Behavior::rotate);
+        aiBehaviorSequence.push_back(EBehavior::ROTATE);
         currentRot = (currentRot + 1) % ROTATION_COUNT;
     }
 
@@ -191,30 +199,31 @@ bool TetrisAIMachine::AIGetBehaveSequence(int bestX, int bestY, int bestRot, int
     {
         if (currentX < bestX)
         {
-            aiBehaviorSequence.push_back(Behavior::right); // 2 = move right
+            aiBehaviorSequence.push_back(EBehavior::RIGHT);
             currentX++;
         }
         else if (currentX > bestX)
         {
-            aiBehaviorSequence.push_back(Behavior::left); // 3 = move left
+            aiBehaviorSequence.push_back(EBehavior::LEFT);
             currentX--;
         }
     }
 
-    aiDestY = bestY;
     // 다운 동작 추가
-    aiBehaviorSequence.insert(aiBehaviorSequence.end(), bestY - currentY, Behavior::down);
+    int downCount = bestY - currentY;
+    if (downCount < 1) downCount = 1;
+    aiBehaviorSequence.insert(aiBehaviorSequence.end(), downCount, EBehavior::DOWN);
 
     aiOneMoveTime = ACTION_TICK;
     // 속도 보정
-    float totalExpectedTime = aiBehaviorSequence.size() * ACTION_TICK;
+    float totalExpectedTime = static_cast<float>(aiBehaviorSequence.size()) * ACTION_TICK;
     if (totalExpectedTime > GRAVITY_TIME) {
         aiOneMoveTime = GRAVITY_TIME / (float)aiBehaviorSequence.size();
     }
     return true;
 }
 
-void TetrisAIMachine::AIChangeState(AIStateFunc nextState)
+void TetrisAIMachine::ChangeAIState(AIStateFunc nextState)
 {
     aiCurState = nextState;
 }
@@ -234,25 +243,24 @@ void TetrisAIMachine::AIStateFalling(float deltaTime)
         {
             aiPlayer->MoveDown();
         }
-        AIChangeState(&TetrisAIMachine::AIStateLocking);
+        ChangeAIState(&TetrisAIMachine::AIStateLocking);
         return;
     }
 
-    //한동작 소화
-    Behavior currentBehavior = aiBehaviorSequence.front();
+    EBehavior currentBehavior = aiBehaviorSequence.front();
     aiBehaviorSequence.pop_front();
     switch (currentBehavior)
     {
-    case Behavior::rotate:
+    case EBehavior::ROTATE:
         AIRotate();
         break;
-    case Behavior::right:
+    case EBehavior::RIGHT:
         AIMoveHorizontal(false);
         break;
-    case Behavior::left:
+    case EBehavior::LEFT:
         AIMoveHorizontal(true);
         break;
-    case Behavior::down:
+    case EBehavior::DOWN:
         AIMoveDown();
         break;
     default:
@@ -269,7 +277,7 @@ void TetrisAIMachine::AIStateLocking(float deltaTime)
     aiBoard->PlacePiece(aiPlayer->GetPieceType(), aiPlayer->GetRotation(),
         aiPlayer->GetOffsetX(), aiPlayer->GetOffsetY());
 
-    AIChangeState(&TetrisAIMachine::AIStateLineClearing);
+    ChangeAIState(&TetrisAIMachine::AIStateLineClearing);
 }
 
 void TetrisAIMachine::AIStateLineClearing(float deltaTime)
@@ -279,7 +287,11 @@ void TetrisAIMachine::AIStateLineClearing(float deltaTime)
 
 void TetrisAIMachine::AIStateGameOver(float deltaTime)
 {
-    requestedEnd = true;
+    aiDyingTermTimer.Tick(deltaTime);
+    if (!aiDyingTermTimer.IsTimeOut())
+        return;
+
+    requestedGameEnd = true;
 }
 
 void TetrisAIMachine::AIRotate()
@@ -291,7 +303,8 @@ void TetrisAIMachine::AIRotate()
 
 void TetrisAIMachine::AIMoveHorizontal(bool isLeft)
 {
-    int nextX = isLeft ? aiPlayer->GetOffsetX() - 1 : aiPlayer->GetOffsetX() + 1;
+    int curX = aiPlayer->GetOffsetX();
+    int nextX = isLeft ? curX - 1 : curX + 1;
     if (aiBoard->CanPlaceForHorizontal(aiPlayer->GetPieceType(), aiPlayer->GetRotation(), nextX, aiPlayer->GetOffsetY()))
     {
         aiPlayer->MoveHorizontal(isLeft);
@@ -310,9 +323,9 @@ bool TetrisAIMachine::AIMoveDown()
     return false;
 }
 
-std::optional<bool> TetrisAIMachine::ConsumeRequestedEnd()
+optional<bool> TetrisAIMachine::ConsumeRequestedGameEnd()
 {
-    auto temp = requestedEnd;
-    requestedEnd.reset();
+    auto temp = requestedGameEnd;
+    requestedGameEnd.reset();
     return temp;
 }

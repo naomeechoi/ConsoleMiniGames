@@ -148,7 +148,7 @@ bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
     const auto& piece = g_PieceInfo[(int)type];
 
     // I L 같은 요소를 위해 2칸까지 위로 올려봄
-    for (int yOffset = 0; yOffset >= -2; yOffset--)
+    for (int yOffset = 0; yOffset >= -3; yOffset--)
     {
         int outOfBoundaryCount = 0;
         bool collision = false;
@@ -174,9 +174,10 @@ bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
         // 모든 블록이 화면 밖이면 spawn 불가
         if (outOfBoundaryCount == BLOCK_COUNT)
         {
-            x = -1;
+            continue;
+            /*x = -1;
             y = -1;
-            return false;
+            return false;*/
         }
 
         if (collision)
@@ -458,7 +459,7 @@ float TetrisBoard::GetScoreWhenPlacePiece(PieceType type, int rotation, int ox, 
             }
 		}
     }
-    result += height * (-3.78f);
+    result += height * (-4.5f);
 
     // 2. 머리 위는 막혀 있고 나는 구멍일 때
     float emptyCells = 0;
@@ -538,8 +539,8 @@ float TetrisBoard::GetScoreWhenPlacePiece(PieceType type, int rotation, int ox, 
             }
         }
     }
-    result += countTouchingSides * 2.5f;
-    result += countTouchingBottom * 4.0f;
+    result += countTouchingSides * 1.5f;
+    result += countTouchingBottom * 5.0f;
 
     // 7. 현재 블록이 기존 블록들과 닿는 개수
     float countTouchingOthers = 0;
@@ -559,7 +560,7 @@ float TetrisBoard::GetScoreWhenPlacePiece(PieceType type, int rotation, int ox, 
 			}
         }
     }
-    result += countTouchingOthers * 3.7f;
+    result += countTouchingOthers * 2.7f;
 
 	return result;
 }

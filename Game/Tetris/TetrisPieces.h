@@ -27,7 +27,6 @@ struct PieceInfo
     Color color;
 };
 
-
 extern const PieceInfo g_PieceInfo[PIECE_COUNT];
 extern const char* smallBrick;
 extern const int smallBrickXSize;

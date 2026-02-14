@@ -2,7 +2,7 @@
 #include "TetrisPlayer.h"
 #include "TetrisAIMachine.h"
 #include "TetrisBoard.h"
-#include "Common/Common.h"
+#include "Common/GameCommon.h"
 #include "System/Input.h"
 #include "TetrisRotationSystem.h"
 #include "Util/Random.h"
@@ -176,7 +176,7 @@ void TetrisLevel::CheckAILose()
     if (!ValidCheck())
         return;
 
-    if (auto aiLose = aiMachine->ConsumeRequestedEnd())
+    if (auto aiLose = aiMachine->ConsumeRequestedGameEnd())
     {
         if (!*aiLose)
             return;

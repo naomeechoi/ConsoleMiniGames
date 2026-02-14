@@ -1,39 +1,48 @@
 #pragma once
-#include "TetrisPlayer.h"
-#include "TetrisBoard.h"
 #include "System/Timer.h"
 #include "Math/Vector2.h"
+#include "TetrisPieces.h"
+#include <deque>
+#include <optional>
+
+class TetrisPlayer;
+class TetrisBoard;
 
 class TetrisAIMachine
 {
+    enum class EBehavior
+    {
+        ROTATE,
+        RIGHT,
+        LEFT,
+        DOWN
+    };
     typedef void (TetrisAIMachine::* AIStateFunc)(float deltaTime);
+
 public:
-    TetrisAIMachine(Vector2 worldPos, float lockTime);
+    TetrisAIMachine(MinigameEngine::Vector2 worldPosition, float lockTime);
     ~TetrisAIMachine();
+    TetrisAIMachine(const TetrisAIMachine&) = delete;
+    TetrisAIMachine& operator=(const TetrisAIMachine&) = delete;
 
     void BeginPlay(std::deque<PieceType> pieceQueue);
 	void Tick(float deltaTime);
     void Draw();
-    bool ValidCheck();
     
     void AddTrashLines(int count);
     int GetCleanCount();
-	void SynclonizeSpawnPieceWithPlayer(PieceType piece);
-
     void InsertPieceToQueue(PieceType piece);
     void Clear();
 
 private:
-    TetrisPlayer* aiPlayer = nullptr;
-    TetrisBoard* aiBoard = nullptr;
+    bool ValidCheck();
 
-    AIStateFunc aiCurState = nullptr;
-
+    //AI Logics
 private:
-    bool AIFindBestPos(PieceType type, int x, int y, int rot);
-    bool AIGetBehaveSequence(int bestX, int bestY, int bestRot, int x, int y, int rot);
+    bool FindBestPosition(PieceType type, int x, int y, int rot);
+    bool GetBehaveSequence(int bestX, int bestY, int bestRot, int x, int y, int rot);
     void SpawnAINewPiece();
-    void AIChangeState(AIStateFunc nextState);
+    void ChangeAIState(AIStateFunc nextState);
 
     // 각 상태 로직
     void AIStateFalling(float deltaTime);
@@ -45,29 +54,26 @@ private:
     void AIMoveHorizontal(bool isLeft);
     bool AIMoveDown();
 
+public:
+    std::optional<bool> ConsumeRequestedGameEnd();
+
+private:
+    TetrisPlayer* aiPlayer = nullptr;
+    TetrisBoard* aiBoard = nullptr;
+    AIStateFunc aiCurState = nullptr;
+
     MinigameEngine::Timer aiOneMoveTimer;
     MinigameEngine::Timer aiLockDelayTimer;
+    MinigameEngine::Timer aiDyingTermTimer;
     float aiOneMoveTime = 0.0f;
 
-    enum Behavior
-    {
-        rotate,
-        right,
-        left,
-        down,
-    };
-    // TODO: 우선 하드코딩
-    // 0, x축움직임
-    std::deque<Behavior> aiBehaviorSequence;
-    int aiDestY = 0;
+    std::deque<EBehavior> aiBehaviorSequence;
+    size_t behaviorIndex = 0;
 
-    Vector2 worldPos;
+    MinigameEngine::Vector2 worldPosition;
 	float lockTime = 0.5f;
 
-    std::optional<bool> requestedEnd;
+    std::optional<bool> requestedGameEnd;
     bool isPlaying = false;
-
-public:
-    std::optional<bool> ConsumeRequestedEnd();
 };
 
