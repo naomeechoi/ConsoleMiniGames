@@ -162,7 +162,7 @@ bool TetrisAIMachine::FindBestPosition(PieceType type, int x, int y, int rot)
                 tryY++;
             }
 
-            float curScore = aiBoard->GetScoreWhenPlacePiece(type, tryRot, tryXOffset, tryY);
+            float curScore = aiBoard->GetScoreIfPlacePiece(type, tryRot, tryXOffset, tryY);
             if (curScore > maxScore)
             {
                 maxScore = curScore;
@@ -305,7 +305,7 @@ void TetrisAIMachine::AIMoveHorizontal(bool isLeft)
 {
     int curX = aiPlayer->GetOffsetX();
     int nextX = isLeft ? curX - 1 : curX + 1;
-    if (aiBoard->CanPlaceForHorizontal(aiPlayer->GetPieceType(), aiPlayer->GetRotation(), nextX, aiPlayer->GetOffsetY()))
+    if (aiBoard->CanPlace(aiPlayer->GetPieceType(), aiPlayer->GetRotation(), nextX, aiPlayer->GetOffsetY()))
     {
         aiPlayer->MoveHorizontal(isLeft);
     }

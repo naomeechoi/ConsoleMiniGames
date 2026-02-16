@@ -332,7 +332,7 @@ bool TetrisLevel::MoveDown()
 bool TetrisLevel::MoveHorizontal(bool isLeft)
 {
     int nextX = isLeft ? player->GetOffsetX() - 1 : player->GetOffsetX() + 1;
-    if (board->CanPlaceForHorizontal(player->GetPieceType(), player->GetRotation(), nextX, player->GetOffsetY()))
+    if (board->CanPlace(player->GetPieceType(), player->GetRotation(), nextX, player->GetOffsetY()))
     {
         player->MoveHorizontal(isLeft);
         return true;

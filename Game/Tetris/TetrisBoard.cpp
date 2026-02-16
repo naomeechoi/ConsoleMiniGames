@@ -2,20 +2,14 @@
 #include "Math/Vector2.h"
 #include "Render/Renderer.h"
 #include "Util/Random.h"
-
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
+#include "System/FileIO.h"
 
 using namespace MinigameEngine;
 
 TetrisBoard::TetrisBoard(Vector2 startPos)
     : startPos(startPos)
 {
-    LoadEdgeTxt();
-    LoadOneBrickEdgeTxt();
+    LoadBoardsEdgeTxt();
     Clear();
 }
 
@@ -40,7 +34,7 @@ void TetrisBoard::Draw()
     Vector2 edgePos{ startPos.x - 1, startPos.y - 1 };
 
     Renderer::Get().SubmitMultiLine(
-        edge.c_str(),
+        boardEdge.c_str(),
         edgePos,
         Color::Green
     );
@@ -194,19 +188,25 @@ bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
     return false;
 }
 
-bool TetrisBoard::IsInside(int x, int y) const
+bool TetrisBoard::IsAboveBottom(int y) const
 {
-    return IsInsideX(x) && IsInsideY(y);
+    return y < BOARD_HEIGHT;
 }
 
-bool TetrisBoard::IsInsideX(int x) const
+bool TetrisBoard::CheckXBoundary(int x) const
 {
     return x >= 0 && x < BOARD_WIDTH;
 }
 
-bool TetrisBoard::IsInsideY(int y) const
+bool TetrisBoard::CheckOutOfBoundary(int x, int y)
 {
-    return y < BOARD_HEIGHT;
+    if (y < 0 || y >= BOARD_HEIGHT)
+        return false;
+
+    if (x < 0 || x >= BOARD_WIDTH)
+        return false;
+
+    return true;
 }
 
 bool TetrisBoard::IsOccupied(int x, int y)
@@ -228,22 +228,7 @@ bool TetrisBoard::CanPlace(PieceType type, int rotation, int ox, int oy)
         int x = ox + piece.blocks[rotation][i].x;
         int y = oy + piece.blocks[rotation][i].y;
 
-        if (!IsInside(x, y) || IsOccupied(x, y))
-            return false;
-    }
-    return true;
-}
-
-bool TetrisBoard::CanPlaceForHorizontal(PieceType type, int rotation, int ox, int oy)
-{
-    const auto& piece = g_PieceInfo[(int)type];
-
-    for (int i = 0; i < BLOCK_COUNT; ++i)
-    {
-        int x = ox + piece.blocks[rotation][i].x;
-        int y = oy + piece.blocks[rotation][i].y;
-
-        if (!IsInsideX(x) || IsOccupied(x, y))
+        if (!CheckXBoundary(x) || !IsAboveBottom(y) || IsOccupied(x, y))
             return false;
     }
     return true;
@@ -355,78 +340,40 @@ std::optional<int> TetrisBoard::ConsumeCleanLineCount()
 
 void TetrisBoard::AddTrashLines(int count)
 {
-    for (int c = 0; c < count; ++c)
-    {
-        AddOneLine();
-    }
-}
-
-void TetrisBoard::AddOneLine()
-{
-    std::array<Cell, BOARD_WIDTH> tempRow;
-    int emptyCell = Random::Random(0, BOARD_WIDTH - 1);
-    for (int x = 0; x < BOARD_WIDTH; ++x)
-    {
-        if (x == emptyCell)
-        {
-            tempRow[x].type = PieceType::EMPTY;
-        }
-        else
-        {
-            tempRow[x].type = PieceType::DUMMY;
-        }
-    }
-
-    for (int i = 0; i < BOARD_HEIGHT - 1; i++)
-    {
-        grid[i] = grid[i + 1];
-    }
-    grid[BOARD_HEIGHT - 1] = tempRow;
-}
-
-void TetrisBoard::LoadEdgeTxt()
-{
-    std::ifstream file("../Assets/Tetris/BoardEdge.txt");
-    if (!file.is_open())
-    {
-        std::cout << "Fail to open BoardEdge.txt\n";
-        __debugbreak();
+    if (count <= 0)
         return;
-    }
 
-    std::ostringstream buffer;
-    buffer << file.rdbuf();
-    edge = buffer.str();
-}
+    if (count > BOARD_HEIGHT)
+        count = BOARD_HEIGHT;
 
-void TetrisBoard::LoadOneBrickEdgeTxt()
-{
-    std::ifstream file("../Assets/Tetris/OneBrickEdge.txt");
-    if (!file.is_open())
+    for (int y = 0; y < BOARD_HEIGHT - count; y++)
     {
-        std::cout << "Fail to open BoardEdge.txt\n";
-        __debugbreak();
-        return;
+        grid[y] = grid[y + count];
     }
 
-    std::ostringstream buffer;
-    buffer << file.rdbuf();
-    oneBrickEdge = buffer.str();
+    for (int y = BOARD_HEIGHT - count; y < BOARD_HEIGHT; y++)
+    {
+        int emptyCell = Random::Random(0, BOARD_WIDTH - 1);
+
+        for (int x = 0; x < BOARD_WIDTH; x++)
+        {
+            grid[y][x].type =
+                (x == emptyCell) ? PieceType::EMPTY
+                : PieceType::DUMMY;
+        }
+    }
 }
 
-
-bool TetrisBoard::CheckOutOfBoundary(int x, int y)
+void TetrisBoard::LoadBoardsEdgeTxt()
 {
-    if (y < 0 || y >= BOARD_HEIGHT)
-        return false;
+    boardEdge = FileIO::ReadFileFast("../Assets/Tetris/BoardEdge.txt");
+    FileIO::RemoveCR(boardEdge);
 
-    if (x < 0 || x >= BOARD_WIDTH)
-        return false;
-
-    return true;
+    oneBrickEdge = FileIO::ReadFileFast("../Assets/Tetris/OneBrickEdge.txt");
+    FileIO::RemoveCR(oneBrickEdge);
 }
 
-float TetrisBoard::GetScoreWhenPlacePiece(PieceType type, int rotation, int ox, int oy)
+float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, int oy)
 {
     std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> originalGrid = grid;
     std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> testGrid = grid;

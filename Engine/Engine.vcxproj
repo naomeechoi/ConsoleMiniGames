@@ -99,6 +99,7 @@ xcopy "$(OutDir)\Engine.lib" "..\Library\Engine\$(Platform)\$(Configuration)\" /
     <ClCompile Include="Core\LevelManager.cpp" />
     <ClCompile Include="Render\Renderer.cpp" />
     <ClCompile Include="Render\ScreenBuffer.cpp" />
+    <ClCompile Include="System\FileIO.cpp" />
     <ClCompile Include="System\Input.cpp" />
     <ClCompile Include="System\Timer.cpp" />
     <ClCompile Include="Util\Console.cpp" />
@@ -113,6 +114,7 @@ xcopy "$(OutDir)\Engine.lib" "..\Library\Engine\$(Platform)\$(Configuration)\" /
     <ClInclude Include="Core\LevelManager.h" />
     <ClInclude Include="Render\Renderer.h" />
     <ClInclude Include="Render\ScreenBuffer.h" />
+    <ClInclude Include="System\FileIO.h" />
     <ClInclude Include="System\Input.h" />
     <ClInclude Include="System\Timer.h" />
     <ClInclude Include="Util\Console.h" />

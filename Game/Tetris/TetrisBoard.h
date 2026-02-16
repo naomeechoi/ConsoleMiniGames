@@ -16,82 +16,39 @@ class TetrisBoard
         PieceType type = PieceType::EMPTY;
         float flashFrame;
 	};
+
 public:
     TetrisBoard(Vector2 startPos);
 
+    void Draw();
+    void Tick(float deltaTime);
     void Clear();
 
-    // =========================
-    // 상태 조회
-    // =========================
-    bool IsInside(int x, int y) const;
-    bool IsInsideX(int x) const;
-    bool IsInsideY(int y) const;
-    bool IsOccupied(int x, int y);
+    bool CanPlace(PieceType type, int rotation, int ox, int oy);
+    bool PlacePiece(PieceType type, int rotation, int ox, int oy);
+    float GetScoreIfPlacePiece(PieceType type, int rotation, int ox, int oy);
+    void AddTrashLines(int count);
 
-    PieceType GetCell(int x, int y) const;
-    bool IsCellEmpty(int x, int y) const;
-
-    // =========================
-    // 배치 가능 검사
-    // =========================
-    bool CanPlace(PieceType type,
-        int rotation,
-        int offsetX,
-        int offsetY);
-    bool CanPlaceForHorizontal(PieceType type,
-        int rotation,
-        int offsetX,
-        int offsetY);
-
-    // =========================
-    // 퍼즐 고정
-    // =========================
-    bool PlacePiece(PieceType type,
-        int rotation,
-        int offsetX,
-        int offsetY);
-
-    // =========================
-    // 라인 제거
-    // =========================
     void ClearLines(float deltaTime);
-
-    void Draw();
-	void Tick(float deltaTime);
+    std::optional<int> ConsumeCleanLineCount();
 
     bool GetSpawnPos(PieceType type, int& x, int& y, int& rot);
 
 private:
-    // -1 = empty
+    void LoadBoardsEdgeTxt();
+    bool IsAboveBottom(int y) const;
+    bool CheckXBoundary(int x) const;
+    bool CheckOutOfBoundary(int x, int y);
+    bool IsOccupied(int x, int y);
+
+private:
     std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> grid;
     Vector2 startPos;
-
-private:
-    void LoadEdgeTxt();
-    void LoadOneBrickEdgeTxt();
-    bool CheckOutOfBoundary(int x, int y);
-
-private:
-    std::string edge;
+    std::string boardEdge;
     std::string oneBrickEdge;
     float lineFlashTimers[BOARD_HEIGHT] = { 0 };
 
     bool isClearing = false;
     std::vector<int> clearingLines;
-
-public:
-    float GetScoreWhenPlacePiece(PieceType type,
-        int rotation,
-        int offsetX,
-        int offsetY);
-
-    std::optional<int> ConsumeCleanLineCount();
-    void AddTrashLines(int count);
-
-    void AddOneLine();
-
-private:
     std::optional<int> cleanCount;
-
 };
