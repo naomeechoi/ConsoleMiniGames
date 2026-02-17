@@ -1,24 +1,20 @@
 #include "SpotTheDifferenceMode.h"
 #include <unordered_set>
 
-SpotTheDifferenceMode::SpotTheDifferenceMode()
-{
-}
+using std::unordered_set;
 
-void SpotTheDifferenceMode::SetAnswer(std::unordered_set<int>& answer)
+void SpotTheDifferenceMode::SetAnswer(unordered_set<int>& answer)
 {
 	answerSet.insert(answer.begin(), answer.end());
 }
 
-const std::unordered_set<int>& SpotTheDifferenceMode::GetAnswer()
+const unordered_set<int>& SpotTheDifferenceMode::GetAnswer()
 {
-	// TODO: 여기에 return 문을 삽입합니다.
 	return answerSet;
 }
 
-const std::unordered_set<int>& SpotTheDifferenceMode::GetUserAnswer()
+const unordered_set<int>& SpotTheDifferenceMode::GetUserAnswer()
 {
-	// TODO: 여기에 return 문을 삽입합니다.
 	return userAnswerSet;
 }
 
