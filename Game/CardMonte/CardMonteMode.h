@@ -1,9 +1,7 @@
 #pragma once
 #include "World/Mode.h"
 
-using namespace MinigameEngine;
-
-class CardMonteMode : public Mode
+class CardMonteMode : public MinigameEngine::Mode
 {
 public:
 	CardMonteMode();
