@@ -6,24 +6,22 @@
 #include <string>
 #include <vector>
 
-using namespace MinigameEngine;
-
 class UITop;
 class UILoadingBar;
 class UIMessage;
 class UIColorEffect;
 class CardMonteMode;
-class CardMonteLevel : public Level
+class CardMonteLevel : public MinigameEngine::Level
 {
 	using StateFunc = void (CardMonteLevel::*)(float);
-	struct Card
+	struct SCard
 	{
 		int num = -1;
-		Vector2 pos;
-		Vector2 originPos;
+		MinigameEngine::Vector2 pos;
+		MinigameEngine::Vector2 originPos;
 	};
 
-	struct ShufflePair
+	struct SShufflePair
 	{
 		int a = -1;
 		int b = -1;
@@ -35,17 +33,15 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void OnExit() override;
-	virtual void Tick(float deltaTime, Input* input) override;
+	virtual void Tick(float deltaTime, MinigameEngine::Input* input) override;
 	virtual void Draw() override;
 
 private:
 	void LoadSetting();
 	void CardSetting();
+	void SetAnswer();
 	void Clear();
-
-private:
-	Vector2 GetCenter(const Vector2& card);
-	Vector2 CenterToTopLeft(const Vector2& center);
+	bool ValidCheck();
 
 private:
 	CardMonteMode* mode = nullptr;
@@ -70,7 +66,7 @@ private:
 	std::string message;
 
 	std::vector<std::string> cardSprites;
-	std::vector<Card> cards;
+	std::vector<SCard> cards;
 
 private:
 	void ChangeState(StateFunc next, float duration);
@@ -79,29 +75,29 @@ private:
 	void StateShuffle(float deltatime);
 	void StateChoose(float deltatime);
 	void StateGameOver(float deltatime);
-	void StateGameWin(float deltatime);
 	void StateWaitToExit(float deltatime);
 
 
 private:
 	void SetShufflePairs();
-	Vector2 CircularLerp(const Vector2& start, const Vector2& end, float t, bool topArc = true);
+	MinigameEngine::Vector2 GetCenter(const MinigameEngine::Vector2& card);
+	MinigameEngine::Vector2 CenterToTopLeft(const MinigameEngine::Vector2& center);
+	MinigameEngine::Vector2 CircularLerp(
+		const MinigameEngine::Vector2& start,
+		const MinigameEngine::Vector2& end,
+		float t, bool topArc = true);
 	void FlipCard(bool isOpen);
 	std::vector<int> GetCurCardsOrder();
-	void HandleChooseInput(Input* input);
+	void HandleChooseInput(MinigameEngine::Input* input);
 
 private:
 	StateFunc curState = nullptr;
-	Timer stateTimer;
+	MinigameEngine::Timer stateTimer;
 
-private:
 	int spriteIdx = 0;
 	int currentShuffleIdx = 0;
-
 	int selectedIdx = -1;
-
 	bool isSuccess = false;
 
-private:
-	std::vector<ShufflePair> shufflePairs;
+	std::vector<SShufflePair> shufflePairs;
 };

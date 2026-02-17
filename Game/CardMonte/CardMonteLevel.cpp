@@ -3,13 +3,15 @@
 #include "CardMonteMode.h"
 #include "Render/Renderer.h"
 #include "System/Input.h"
+#include "System/FileIO.h"
 #include "Common/GameCommon.h"
 #include "UI/UITop.h"
 #include "UI/UILoadingBar.h"
 #include "UI/UIColorEffect.h"
 #include "UI/UIMessage.h"
 #include "Util/Random.h"
-#include <iostream>
+#include "Util/Delete.h"
+#include <cassert>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -20,6 +22,8 @@ const float BLANK_TIME = 4.0f;
 const int BLANK_COUNT = 20;
 const int MESSAGE_UI_OFFSET_X = 5;
 
+using namespace MinigameEngine;
+
 CardMonteLevel::CardMonteLevel()
 {
 	LoadSetting();
@@ -29,35 +33,11 @@ CardMonteLevel::~CardMonteLevel()
 {
     OnExit();
 
-    if (topUI)
-    {
-        delete topUI;
-        topUI = nullptr;
-    }
-
-    if (loadingBarUI)
-    {
-        delete loadingBarUI;
-        loadingBarUI = nullptr;
-    }
-
-    if (colorEffectUI)
-    {
-        delete colorEffectUI;
-        colorEffectUI = nullptr;
-    }
-
-    if (messageUI)
-    {
-        delete messageUI;
-        messageUI = nullptr;
-    }
-
-    if (mode)
-    {
-        delete mode;
-        mode = nullptr;
-    }
+    SafeDelete(topUI);
+    SafeDelete(loadingBarUI);
+    SafeDelete(colorEffectUI);
+    SafeDelete(messageUI);
+    SafeDelete(mode);
 }
 
 void CardMonteLevel::BeginPlay()
@@ -85,26 +65,12 @@ void CardMonteLevel::BeginPlay()
     if (!messageUI)
         messageUI = new UIMessage();
 
-    if (!mode
-        || !topUI
-        || !loadingBarUI
-        || !colorEffectUI
-        || !messageUI)
+    if (!ValidCheck())
     {
-        // 게임 시작 못하는 상황
-        RequestChangeLevel((int)LevelType::Menu);
         return;
     }
 
-    // CardMonteLevel::BeginPlay() 내부
-    int answerCardIdx = Random::Random(0, (int)cards.size() - 1);
-    int answer = cards[answerCardIdx].num;
-    mode->SetAnswer(answer);
-
-    // 멤버 변수인 message를 직접 수정하지 말고 지역 변수 생성
-    std::string finalMessage = message + std::to_string(answer);
-    messageUI->Start(displaySize.x - 2, Vector2(3, displaySize.y - MESSAGE_UI_OFFSET_X), finalMessage, " ");
-    // 시작
+    SetAnswer();
     ChangeState(&CardMonteLevel::StateShowing, showingTime);
 }
 
@@ -185,8 +151,7 @@ void CardMonteLevel::LoadSetting()
 {
     std::ifstream file("../Assets/CardMonte/setting.txt", std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "Fail to open file: CardMonte/setting.txt" << std::endl;
-        __debugbreak();
+        assert(false && "/Assets/CardMonte/setting.txt cannot open");
         return;
     }
 
@@ -195,10 +160,8 @@ void CardMonteLevel::LoadSetting()
     bool readingImage = false;
 
     while (std::getline(file, line)) {
-        // CR 제거
-        line.erase(remove(line.begin(), line.end(), '\r'), line.end());
+        FileIO::RemoveCR(line);
 
-        // 변수 파싱
         if (line.find("cardCount") != std::string::npos) {
             cardCount = stoi(line.substr(line.find('=') + 1));
         }
@@ -232,17 +195,14 @@ void CardMonteLevel::LoadSetting()
                 cardSprites.push_back(currentSprite);
                 currentSprite.clear();
             }
-            // "=" 뒤부터 카드 내용 시작
             currentSprite += line.substr(line.find('=') + 1) + "\n";
             readingImage = true;
         }
-        // 카드 이미지 누적
         else if (readingImage) {
             currentSprite += line + "\n";
         }
     }
 
-    // 마지막 이미지 추가
     if (!currentSprite.empty()) {
         cardSprites.push_back(currentSprite);
     }
@@ -257,7 +217,7 @@ void CardMonteLevel::CardSetting()
 
     cards.clear();
     for (int i = 0; i < cardCount; i++) {
-        Card card;
+        SCard card;
         card.num = i + 1;
         card.pos.x = CARD_LEFT_X_OFFSET + i * (cardWidth + (int)cardGap);
         card.pos.y = (int)posY;
@@ -266,6 +226,18 @@ void CardMonteLevel::CardSetting()
     }
 
     cardMidIdx = (int)cardSprites[0].size() / 2 - 1;
+}
+
+void CardMonteLevel::SetAnswer()
+{
+    if (!ValidCheck())
+        return;
+
+    int answerCardIdx = Random::Random(0, (int)cards.size() - 1);
+    int answer = cards[answerCardIdx].num;
+    mode->SetAnswer(answer);
+    std::string findMsg = message + std::to_string(answer);
+    messageUI->Start(displaySize.x - 2, Vector2(3, displaySize.y - MESSAGE_UI_OFFSET_X), findMsg, " ");
 }
 
 void CardMonteLevel::Clear()
@@ -278,7 +250,6 @@ void CardMonteLevel::Clear()
     curState = nullptr;
     selectedIdx = -1;
     isSuccess = false;
-
 
     if (mode)
         mode->Clear();
@@ -294,6 +265,154 @@ void CardMonteLevel::Clear()
 
     if (messageUI)
         messageUI->Clear();
+}
+
+bool CardMonteLevel::ValidCheck()
+{
+    const int pointSize = 5;
+    void* checks[pointSize] = { mode, topUI, loadingBarUI, colorEffectUI, messageUI };
+    for (int i = 0; i < pointSize; i++)
+    {
+        if (checks[i] == nullptr)
+        {
+            RequestChangeLevel((int)LevelType::Menu);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void CardMonteLevel::ChangeState(StateFunc next, float duration)
+{
+    stateTimer.Reset();
+    stateTimer.SetTargetTime(duration);
+    curState = next;
+}
+
+void CardMonteLevel::StateShowing(float deltatime)
+{
+    stateTimer.Tick(deltatime);
+    if (stateTimer.IsTimeOut())
+        ChangeState(&CardMonteLevel::StateFilp, showingTime);
+}
+
+void CardMonteLevel::StateFilp(float deltatime)
+{
+    stateTimer.Tick(deltatime);
+    
+    FlipCard(false);
+    if (stateTimer.IsTimeOut())
+    {
+        spriteIdx = (int)cardSprites.size() - 1;
+        ChangeState(&CardMonteLevel::StateShuffle, cardFilpTime);
+    }
+}
+
+void CardMonteLevel::StateShuffle(float deltatime)
+{
+    stateTimer.Tick(deltatime);
+    float t = stateTimer.GetRatio();
+
+    const SShufflePair& pair = shufflePairs[currentShuffleIdx];
+
+    SCard* cardA = nullptr;
+    SCard* cardB = nullptr;
+    for (auto& card : cards)
+    {
+        if (card.num == pair.a) cardA = &card;
+        else if (card.num == pair.b) cardB = &card;
+    }
+
+    if (!cardA || !cardB)
+        return;
+
+    cardA->pos = CircularLerp(cardA->originPos, cardB->originPos, t, true);
+    cardB->pos = CircularLerp(cardB->originPos, cardA->originPos, t, false);
+
+    if (stateTimer.IsTimeOut())
+    {
+        // put each other's pos
+        Vector2 tmpOrigin = cardA->originPos;
+        cardA->pos = cardB->originPos;
+        cardB->pos = tmpOrigin;
+
+        // exchange originPos
+        cardA->originPos = cardB->originPos;
+        cardB->originPos = tmpOrigin;
+
+        currentShuffleIdx++;
+        if (currentShuffleIdx < shufflePairs.size())
+        {
+            stateTimer.Reset();
+        }
+        else
+        {
+            ChangeState(&CardMonteLevel::StateChoose, playTime);
+            if(loadingBarUI)
+                loadingBarUI->Start();
+            selectedIdx = Random::Random(0, (int)cards.size() - 1);
+        }
+    }
+}
+
+void CardMonteLevel::StateChoose(float deltatime)
+{
+    stateTimer.Tick(deltatime);
+
+    if (colorEffectUI)
+    {
+        colorEffectUI->Start();
+    }
+
+    if (stateTimer.IsTimeOut())
+    {
+        isSuccess = false;
+        ChangeState(&CardMonteLevel::StateGameOver, cardFilpTime);
+    }
+}
+
+void CardMonteLevel::StateGameOver(float deltatime)
+{
+    stateTimer.Tick(deltatime);
+
+    FlipCard(true);
+    if (stateTimer.IsTimeOut())
+    {
+        spriteIdx = 0;
+        ChangeState(&CardMonteLevel::StateWaitToExit, showingTime);
+    }
+}
+
+void CardMonteLevel::StateWaitToExit(float deltatime)
+{
+    stateTimer.Tick(deltatime);
+
+    if (stateTimer.IsTimeOut())
+    {
+        RequestShowResult(isSuccess ? EResult::success : EResult::fail);
+        RequestChangeLevel((int)LevelType::GameResult);
+    }
+}
+
+void CardMonteLevel::SetShufflePairs()
+{
+    shufflePairs.clear();
+    currentShuffleIdx = 0;
+
+    for (int i = 0; i < suffleCount; i++)
+    {
+        int numA = Random::Random(1, cardCount);
+        int numB = numA;
+        while (numB == numA)
+            numB = Random::Random(1, cardCount);
+
+        SShufflePair pair;
+        pair.a = numA;
+        pair.b = numB;
+
+        shufflePairs.push_back(pair);
+    }
 }
 
 Vector2 CardMonteLevel::GetCenter(const Vector2& pos)
@@ -312,31 +431,27 @@ Vector2 CardMonteLevel::CenterToTopLeft(const Vector2& center)
     return topLeft;
 }
 
-void CardMonteLevel::ChangeState(StateFunc next, float duration)
+Vector2 CardMonteLevel::CircularLerp(const Vector2& start, const Vector2& end, float t, bool topArc)
 {
-    stateTimer.Reset();
-    stateTimer.SetTargetTime(duration);
-    curState = next;
-}
+    Vector2 startCenterPos = GetCenter(start);
+    Vector2 endCenterPos = GetCenter(end);
 
-void CardMonteLevel::StateShowing(float deltatime)
-{
-    stateTimer.Tick(deltatime);
-    //보여주는 로직
-    if (stateTimer.IsTimeOut())
-        ChangeState(&CardMonteLevel::StateFilp, showingTime);
-}
-
-void CardMonteLevel::StateFilp(float deltatime)
-{
-    stateTimer.Tick(deltatime);
+    Vector2 center = { (startCenterPos.x + endCenterPos.x) / 2, (startCenterPos.y + endCenterPos.y) / 2 };
     
-    FlipCard(false);
-    if (stateTimer.IsTimeOut())
-    {
-        spriteIdx = (int)cardSprites.size() - 1;
-        ChangeState(&CardMonteLevel::StateShuffle, cardFilpTime);
-    }
+    float radiusX = std::abs(endCenterPos.x - startCenterPos.x) / 2.0f;
+    float radiusY = radiusX * 0.3f;
+
+    float angle = topArc ? (t * 3.14159f) : ((1.0f - t) * 3.14159f);
+
+    Vector2 pos;
+    pos.x = (int)(center.x + radiusX * cos(angle));
+    
+    if(topArc)
+        pos.y = (int)(center.y - radiusY * sin(angle));
+    else
+        pos.y = (int)(center.y + radiusY * sin(angle));
+
+    return CenterToTopLeft(pos);
 }
 
 void CardMonteLevel::FlipCard(bool isOpen)
@@ -344,7 +459,7 @@ void CardMonteLevel::FlipCard(bool isOpen)
 
     float t = stateTimer.GetRatio();
     int maxIdx = (int)cardSprites.size() - 1;
-    int flipIdx = isOpen ? (int)((1-t) * maxIdx) : (int)(t * maxIdx);
+    int flipIdx = isOpen ? (int)((1 - t) * maxIdx) : (int)(t * maxIdx);
     flipIdx = std::clamp(flipIdx, 0, maxIdx);
     spriteIdx = flipIdx;
 }
@@ -383,162 +498,11 @@ void CardMonteLevel::HandleChooseInput(Input* input)
     if (input->IsKeyPressed(VK_SPACE))
     {
         int chosenNum = cards[selectedIdx].num;
-        if (mode->Check(chosenNum))
-        {
-            ChangeState(&CardMonteLevel::StateGameWin, cardFilpTime);
-        }
-        else
-        {
-            ChangeState(&CardMonteLevel::StateGameOver, cardFilpTime);
-        }
+        isSuccess = mode->Check(chosenNum);
+
+        ChangeState(&CardMonteLevel::StateGameOver, cardFilpTime);
+
         if (loadingBarUI)
             loadingBarUI->Stop();
     }
-}
-
-void CardMonteLevel::StateShuffle(float deltatime)
-{
-    stateTimer.Tick(deltatime);
-    float t = stateTimer.GetRatio();
-
-    const ShufflePair& pair = shufflePairs[currentShuffleIdx];
-
-    // num으로 카드 찾기
-    Card* cardA = nullptr;
-    Card* cardB = nullptr;
-    for (auto& c : cards)
-    {
-        if (c.num == pair.a) cardA = &c;
-        else if (c.num == pair.b) cardB = &c;
-    }
-
-    if (!cardA || !cardB)
-        return;
-
-    // 반원 경로 이동
-    cardA->pos = CircularLerp(cardA->originPos, cardB->originPos, t, true);
-    cardB->pos = CircularLerp(cardB->originPos, cardA->originPos, t, false);
-
-    if (stateTimer.IsTimeOut())
-    {
-        // 최종 위치 정확히 상대방 자리로
-        Vector2 tmpOrigin = cardA->originPos;
-        cardA->pos = cardB->originPos;
-        cardB->pos = tmpOrigin;
-
-        // originPos도 교환
-        cardA->originPos = cardB->originPos;
-        cardB->originPos = tmpOrigin;
-
-        currentShuffleIdx++;
-        if (currentShuffleIdx < shufflePairs.size())
-        {
-            stateTimer.Reset();
-        }
-        else
-        {
-            ChangeState(&CardMonteLevel::StateChoose, playTime);
-            if(loadingBarUI)
-                loadingBarUI->Start();
-            selectedIdx = Random::Random(0, (int)cards.size() - 1);
-        }
-    }
-}
-
-void CardMonteLevel::StateChoose(float deltatime)
-{
-    stateTimer.Tick(deltatime);
-
-    if (colorEffectUI)
-    {
-        colorEffectUI->Start();
-    }
-
-    //보여주는 로직
-    if (stateTimer.IsTimeOut())
-        ChangeState(&CardMonteLevel::StateGameOver, cardFilpTime);
-}
-
-void CardMonteLevel::StateGameOver(float deltatime)
-{
-    // 게임 끝내는 로직
-    stateTimer.Tick(deltatime);
-
-    FlipCard(true);
-    if (stateTimer.IsTimeOut())
-    {
-        spriteIdx = 0;
-        isSuccess = false;
-        ChangeState(&CardMonteLevel::StateWaitToExit, showingTime);
-    }
-}
-
-void CardMonteLevel::StateGameWin(float deltatime)
-{
-    // 게임 끝내는 로직
-    stateTimer.Tick(deltatime);
-
-    FlipCard(true);
-    if (stateTimer.IsTimeOut())
-    {
-        spriteIdx = 0;
-        isSuccess = true;
-        ChangeState(&CardMonteLevel::StateWaitToExit, showingTime);
-    }
-}
-
-void CardMonteLevel::StateWaitToExit(float deltatime)
-{
-    // 게임 끝내는 로직
-    stateTimer.Tick(deltatime);
-
-    if (stateTimer.IsTimeOut())
-    {
-        RequestShowResult(isSuccess ? EResult::success : EResult::fail);
-        RequestChangeLevel((int)LevelType::GameResult);
-    }
-}
-
-
-void CardMonteLevel::SetShufflePairs()
-{
-    shufflePairs.clear();
-    currentShuffleIdx = 0;
-
-    for (int i = 0; i < suffleCount; i++)
-    {
-        int numA = Random::Random(1, cardCount);
-        int numB = numA;
-        while (numB == numA)
-            numB = Random::Random(1, cardCount);
-
-        ShufflePair pair;
-        pair.a = numA;
-        pair.b = numB;
-
-        shufflePairs.push_back(pair);
-    }
-}
-
-Vector2 CardMonteLevel::CircularLerp(const Vector2& start, const Vector2& end, float t, bool topArc)
-{
-    Vector2 startCenterPos = GetCenter(start);
-    Vector2 endCenterPos = GetCenter(end);
-
-    Vector2 center = { (startCenterPos.x + endCenterPos.x) / 2, (startCenterPos.y + endCenterPos.y) / 2 };
-    
-    float radiusX = std::abs(endCenterPos.x - startCenterPos.x) / 2.0f;
-    float radiusY = radiusX * 0.3f;
-
-    float angle = topArc ? (t * 3.14159f) : ((1.0f - t) * 3.14159f); // 0~π
-
-    Vector2 pos;
-    pos.x = (int)(center.x + radiusX * cos(angle));
-    
-    if(topArc)
-        pos.y = (int)(center.y - radiusY * sin(angle));
-    else
-        pos.y = (int)(center.y + radiusY * sin(angle));
-
-    return CenterToTopLeft(pos);
 }
