@@ -168,7 +168,7 @@
     <ClCompile Include="Tetris\TetrisBoard.cpp" />
     <ClCompile Include="Tetris\TetrisPlayer.cpp" />
     <ClCompile Include="Tetris\TetrisLevel.cpp" />
-    <ClCompile Include="Tetris\TetrisPieces.cpp" />
+    <ClCompile Include="Tetris\TetrisBlocks.cpp" />
     <ClCompile Include="Tetris\TetrisRotationSystem.cpp" />
     <ClCompile Include="UI\UIColorEffect.cpp" />
     <ClCompile Include="UI\UICorrectCount.cpp" />
@@ -191,7 +191,7 @@
     <ClInclude Include="Tetris\TetrisBoard.h" />
     <ClInclude Include="Tetris\TetrisPlayer.h" />
     <ClInclude Include="Tetris\TetrisLevel.h" />
-    <ClInclude Include="Tetris\TetrisPieces.h" />
+    <ClInclude Include="Tetris\TetrisBlocks.h" />
     <ClInclude Include="Tetris\TetrisRotationSystem.h" />
     <ClInclude Include="UI\UIColorEffect.h" />
     <ClInclude Include="UI\UICorrectCount.h" />

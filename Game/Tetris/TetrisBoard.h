@@ -1,5 +1,5 @@
 #pragma once
-#include "TetrisPieces.h"
+#include "TetrisBlocks.h"
 #include "Math/Vector2.h"
 #include <string>
 #include <vector>
@@ -11,28 +11,28 @@ constexpr int BOARD_HEIGHT = 20;
 
 class TetrisBoard
 {
-    struct Cell
+    struct SCell
     {
-        PieceType type = PieceType::EMPTY;
+        EBlockType type = EBlockType::EMPTY;
         float flashFrame;
 	};
 
 public:
-    TetrisBoard(Vector2 startPos);
+    TetrisBoard(MinigameEngine::Vector2 worldPos);
 
     void Draw();
     void Tick(float deltaTime);
     void Clear();
 
-    bool CanPlace(PieceType type, int rotation, int ox, int oy);
-    bool PlacePiece(PieceType type, int rotation, int ox, int oy);
-    float GetScoreIfPlacePiece(PieceType type, int rotation, int ox, int oy);
+    bool CanPlace(EBlockType type, int rotation, int ox, int oy);
+    bool PlaceBlock(EBlockType type, int rotation, int ox, int oy);
+    float GetScoreIfPlaceBlock(EBlockType type, int rotation, int ox, int oy);
     void AddTrashLines(int count);
 
     void ClearLines(float deltaTime);
     std::optional<int> ConsumeCleanLineCount();
 
-    bool GetSpawnPos(PieceType type, int& x, int& y, int& rot);
+    bool GetSpawnPos(EBlockType type, int& x, int& y, int& rot);
 
 private:
     void LoadBoardsEdgeTxt();
@@ -42,8 +42,8 @@ private:
     bool IsOccupied(int x, int y);
 
 private:
-    std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> grid;
-    Vector2 startPos;
+    std::array<std::array<SCell, BOARD_WIDTH>, BOARD_HEIGHT> grid;
+    MinigameEngine::Vector2 worldPos;
     std::string boardEdge;
     std::string oneBrickEdge;
     float lineFlashTimers[BOARD_HEIGHT] = { 0 };

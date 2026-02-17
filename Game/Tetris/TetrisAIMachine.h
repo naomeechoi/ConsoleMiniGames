@@ -1,7 +1,7 @@
 #pragma once
 #include "System/Timer.h"
 #include "Math/Vector2.h"
-#include "TetrisPieces.h"
+#include "TetrisBlocks.h"
 #include <deque>
 #include <optional>
 
@@ -20,18 +20,18 @@ class TetrisAIMachine
     typedef void (TetrisAIMachine::* AIStateFunc)(float deltaTime);
 
 public:
-    TetrisAIMachine(MinigameEngine::Vector2 worldPosition, float lockTime);
+    TetrisAIMachine(MinigameEngine::Vector2 worldPos, float lockTime);
     ~TetrisAIMachine();
     TetrisAIMachine(const TetrisAIMachine&) = delete;
     TetrisAIMachine& operator=(const TetrisAIMachine&) = delete;
 
-    void BeginPlay(std::deque<PieceType> pieceQueue);
+    void BeginPlay(std::deque<EBlockType> blockQueue);
 	void Tick(float deltaTime);
     void Draw();
     
     void AddTrashLines(int count);
     int GetCleanCount();
-    void InsertPieceToQueue(PieceType piece);
+    void InsertBlockToQueue(EBlockType block);
     void Clear();
 
 private:
@@ -39,9 +39,9 @@ private:
 
     //AI Logics
 private:
-    bool FindBestPosition(PieceType type, int x, int y, int rot);
+    bool FindBestPosition(EBlockType type, int x, int y, int rot);
     bool GetBehaveSequence(int bestX, int bestY, int bestRot, int x, int y, int rot);
-    void SpawnAINewPiece();
+    void SpawnAINewBlock();
     void ChangeAIState(AIStateFunc nextState);
 
     // 각 상태 로직
@@ -70,7 +70,7 @@ private:
     std::deque<EBehavior> aiBehaviorSequence;
     size_t behaviorIndex = 0;
 
-    MinigameEngine::Vector2 worldPosition;
+    MinigameEngine::Vector2 worldPos;
 	float lockTime = 0.5f;
 
     std::optional<bool> requestedGameEnd;

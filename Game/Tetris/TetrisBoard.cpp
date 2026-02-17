@@ -5,9 +5,11 @@
 #include "System/FileIO.h"
 
 using namespace MinigameEngine;
+using std::vector;
+using std::optional;
 
-TetrisBoard::TetrisBoard(Vector2 startPos)
-    : startPos(startPos)
+TetrisBoard::TetrisBoard(Vector2 worldPos)
+    : worldPos(worldPos)
 {
     LoadBoardsEdgeTxt();
     Clear();
@@ -17,12 +19,13 @@ void TetrisBoard::Clear()
 {
     isClearing = false;
     clearingLines.clear();
+    cleanCount.reset();
 
     for (int y = 0; y < BOARD_HEIGHT; ++y)
     {
         for (int x = 0; x < BOARD_WIDTH; ++x)
         {
-            grid[y][x].type = PieceType::EMPTY;
+            grid[y][x].type = EBlockType::EMPTY;
             grid[y][x].flashFrame = 0.0f;
         }
         lineFlashTimers[y] = 0.0f;
@@ -31,7 +34,7 @@ void TetrisBoard::Clear()
 
 void TetrisBoard::Draw()
 {
-    Vector2 edgePos{ startPos.x - 1, startPos.y - 1 };
+    Vector2 edgePos{ worldPos.x - 1, worldPos.y - 1 };
 
     Renderer::Get().SubmitMultiLine(
         boardEdge.c_str(),
@@ -39,7 +42,7 @@ void TetrisBoard::Draw()
         Color::Green
     );
 
-    edgePos.x += 42 + 1;
+    edgePos.x += SMALL_BOARD_DRAW_PADDING_X + 1;
     Renderer::Get().SubmitMultiLine(
         "N E X T         \0",
         edgePos,
@@ -54,17 +57,17 @@ void TetrisBoard::Draw()
             edgePos,
             Color::Yellow
         );
-        edgePos.y += 9;
+        edgePos.y += SMALL_BOARD_DRAW_GAP_Y;
     }
 
-    edgePos.y = startPos.y + 42 - 10;
+    edgePos.y = worldPos.y + 32;
     Renderer::Get().SubmitMultiLine(
         "H O L D         \0",
         edgePos,
         Color::Red
     );
 
-    edgePos.y = startPos.y + 42 - 9;
+    edgePos.y = worldPos.y + 33;
     Renderer::Get().SubmitMultiLine(
         oneBrickEdge.c_str(),
         edgePos,
@@ -75,17 +78,17 @@ void TetrisBoard::Draw()
     {
         for (int x = 0; x < BOARD_WIDTH; ++x)
         {
-            if (grid[y][x].type == PieceType::EMPTY)
+            if (grid[y][x].type == EBlockType::EMPTY)
                 continue;
 
-            const auto& piece = g_PieceInfo[(int)grid[y][x].type];
+            const auto& block = BLOCK_INFO[(int)grid[y][x].type];
 
             Vector2 pos{
-                startPos.x + x * brickXSize,
-                startPos.y + y * brickYSize
+                worldPos.x + x * BLOCK_SIZE_X,
+                worldPos.y + y * BLOCK_SIZE_Y
             };
 
-            Color drawColor = piece.color;
+            Color drawColor = block.color;
 
             if (grid[y][x].flashFrame > 0.0f &&
                 fmod(grid[y][x].flashFrame, 0.1f) < 0.05f)
@@ -99,13 +102,13 @@ void TetrisBoard::Draw()
                 drawColor = Color::Black;
             }
 
-            if (grid[y][x].type == PieceType::DUMMY)
+            if (grid[y][x].type == EBlockType::DUMMY)
             {
                 drawColor = Color::White;
             }
 
             Renderer::Get().SubmitMultiLine(
-                brick,
+                BLOCK_STR,
                 pos,
                 drawColor,
                 drawColor,
@@ -133,13 +136,13 @@ void TetrisBoard::Tick(float deltaTime)
     ClearLines(deltaTime);
 }
 
-bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
+bool TetrisBoard::GetSpawnPos(EBlockType type, int& x, int& y, int& rot)
 {
     x = BOARD_WIDTH / 2;
     y = 0;
     rot = 0;
 
-    const auto& piece = g_PieceInfo[(int)type];
+    const auto& block = BLOCK_INFO[(int)type];
 
     // I L 같은 요소를 위해 2칸까지 위로 올려봄
     for (int yOffset = 0; yOffset >= -3; yOffset--)
@@ -147,10 +150,10 @@ bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
         int outOfBoundaryCount = 0;
         bool collision = false;
 
-        for (int i = 0; i < BLOCK_COUNT; ++i)
+        for (int i = 0; i < CELL_SIZE; ++i)
         {
-            int brickX = x + piece.blocks[rot][i].x;
-            int brickY = y + yOffset + piece.blocks[rot][i].y;
+            int brickX = x + block.shapes[rot][i].x;
+            int brickY = y + yOffset + block.shapes[rot][i].y;
 
             if (!CheckOutOfBoundary(brickX, brickY))
             {
@@ -166,7 +169,7 @@ bool TetrisBoard::GetSpawnPos(PieceType type, int& x, int& y, int& rot)
         }
 
         // 모든 블록이 화면 밖이면 spawn 불가
-        if (outOfBoundaryCount == BLOCK_COUNT)
+        if (outOfBoundaryCount == CELL_SIZE)
         {
             continue;
             /*x = -1;
@@ -214,19 +217,19 @@ bool TetrisBoard::IsOccupied(int x, int y)
     if(y >= 0 && y < BOARD_HEIGHT &&
        x >= 0 && x < BOARD_WIDTH)
     {
-        return grid[y][x].type != PieceType::EMPTY;
+        return grid[y][x].type != EBlockType::EMPTY;
 	}
     return false;
 }
 
-bool TetrisBoard::CanPlace(PieceType type, int rotation, int ox, int oy)
+bool TetrisBoard::CanPlace(EBlockType type, int rotation, int ox, int oy)
 {
-    const auto& piece = g_PieceInfo[(int)type];
+    const auto& block = BLOCK_INFO[(int)type];
 
-    for (int i = 0; i < BLOCK_COUNT; ++i)
+    for (int i = 0; i < CELL_SIZE; i++)
     {
-        int x = ox + piece.blocks[rotation][i].x;
-        int y = oy + piece.blocks[rotation][i].y;
+        int x = ox + block.shapes[rotation][i].x;
+        int y = oy + block.shapes[rotation][i].y;
 
         if (!CheckXBoundary(x) || !IsAboveBottom(y) || IsOccupied(x, y))
             return false;
@@ -234,14 +237,14 @@ bool TetrisBoard::CanPlace(PieceType type, int rotation, int ox, int oy)
     return true;
 }
 
-bool TetrisBoard::PlacePiece(PieceType type, int rotation, int ox, int oy)
+bool TetrisBoard::PlaceBlock(EBlockType type, int rotation, int ox, int oy)
 {
-    const auto& piece = g_PieceInfo[(int)type];
+    const auto& block = BLOCK_INFO[(int)type];
     bool placedAtLeastOne = false;
-    for (int i = 0; i < BLOCK_COUNT; ++i)
+    for (int i = 0; i < CELL_SIZE; i++)
     {
-        int x = ox + piece.blocks[rotation][i].x;
-        int y = oy + piece.blocks[rotation][i].y;
+        int x = ox + block.shapes[rotation][i].x;
+        int y = oy + block.shapes[rotation][i].y;
 
         if (!CheckOutOfBoundary(x, y))
             continue;
@@ -265,7 +268,7 @@ void TetrisBoard::ClearLines(float deltaTime)
             bool full = true;
             for (int x = 0; x < BOARD_WIDTH; ++x)
             {
-                if (grid[y][x].type == PieceType::EMPTY)
+                if (grid[y][x].type == EBlockType::EMPTY)
                 {
                     full = false;
                     break;
@@ -318,7 +321,7 @@ void TetrisBoard::ClearLines(float deltaTime)
     {
         for (int x = 0; x < BOARD_WIDTH; ++x)
         {
-            grid[y][x].type = PieceType::EMPTY;
+            grid[y][x].type = EBlockType::EMPTY;
             grid[y][x].flashFrame = 0.0f;
         }
         lineFlashTimers[y] = 0.0f;
@@ -331,7 +334,7 @@ void TetrisBoard::ClearLines(float deltaTime)
 }
 
 
-std::optional<int> TetrisBoard::ConsumeCleanLineCount()
+optional<int> TetrisBoard::ConsumeCleanLineCount()
 {
     auto temp = cleanCount;
     cleanCount.reset();
@@ -358,8 +361,8 @@ void TetrisBoard::AddTrashLines(int count)
         for (int x = 0; x < BOARD_WIDTH; x++)
         {
             grid[y][x].type =
-                (x == emptyCell) ? PieceType::EMPTY
-                : PieceType::DUMMY;
+                (x == emptyCell) ? EBlockType::EMPTY
+                : EBlockType::DUMMY;
         }
     }
 }
@@ -373,19 +376,19 @@ void TetrisBoard::LoadBoardsEdgeTxt()
     FileIO::RemoveCR(oneBrickEdge);
 }
 
-float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, int oy)
+float TetrisBoard::GetScoreIfPlaceBlock(EBlockType type, int rotation, int ox, int oy)
 {
-    std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> originalGrid = grid;
-    std::array<std::array<Cell, BOARD_WIDTH>, BOARD_HEIGHT> testGrid = grid;
+    std::array<std::array<SCell, BOARD_WIDTH>, BOARD_HEIGHT> originalGrid = grid;
+    std::array<std::array<SCell, BOARD_WIDTH>, BOARD_HEIGHT> testGrid = grid;
 
     float result = 0.0f;
 
     // 가상으로 채워넣기
-    const auto& piece = g_PieceInfo[(int)type];
-    for (int i = 0; i < BLOCK_COUNT; ++i)
+    const auto& block = BLOCK_INFO[(int)type];
+    for (int i = 0; i < CELL_SIZE; i++)
     {
-        int x = ox + piece.blocks[rotation][i].x;
-        int y = oy + piece.blocks[rotation][i].y;
+        int x = ox + block.shapes[rotation][i].x;
+        int y = oy + block.shapes[rotation][i].y;
 
         if (!CheckOutOfBoundary(x, y))
             return result;
@@ -399,7 +402,7 @@ float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, in
     {
         for(int j = 0; j < BOARD_HEIGHT; j++)
         {
-            if(testGrid[j][i].type != PieceType::EMPTY)
+            if(testGrid[j][i].type != EBlockType::EMPTY)
             {
                 height += (BOARD_HEIGHT - j);
                 break;
@@ -414,8 +417,8 @@ float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, in
     {
         for (int j = 0; j < BOARD_WIDTH; j++)
         {
-            if (testGrid[i][j].type == PieceType::EMPTY
-                && testGrid[i-1][j].type != PieceType::EMPTY)
+            if (testGrid[i][j].type == EBlockType::EMPTY
+                && testGrid[i-1][j].type != EBlockType::EMPTY)
             {
                 emptyCells++;
             }
@@ -430,7 +433,7 @@ float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, in
         int curCount = 0;
        for(int j = 0; j < BOARD_HEIGHT - 1; j++)
        {
-           if (testGrid[j][i].type != PieceType::EMPTY)
+           if (testGrid[j][i].type != EBlockType::EMPTY)
            {
                curCount++;
            }
@@ -450,7 +453,7 @@ float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, in
         bool isComplete = true;
         for (int j = 0; j < BOARD_WIDTH; j++)
         {
-            if (testGrid[i][j].type == PieceType::EMPTY)
+            if (testGrid[i][j].type == EBlockType::EMPTY)
             {
                 isComplete = false;
                 break;
@@ -463,14 +466,14 @@ float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, in
 
     // 5. 현재 블록이 좌우 벽면과 닿는 면의 개수
     // 6. 현재 블록이 바닥면과 닿는 개수
-    std::vector<std::vector<int>> offsets = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
+    vector<vector<int>> offsets = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
 
     float countTouchingSides = 0;
     float countTouchingBottom = 0;
-    for (int i = 0; i < BLOCK_COUNT; ++i)
+    for (int i = 0; i < CELL_SIZE; i++)
     {
-        int x = ox + piece.blocks[rotation][i].x;
-        int y = oy + piece.blocks[rotation][i].y;
+        int x = ox + block.shapes[rotation][i].x;
+        int y = oy + block.shapes[rotation][i].y;
         for (int j = 0; j < (int)offsets.size(); j++)
         {
 			int newX = x + offsets[j][0];
@@ -491,17 +494,17 @@ float TetrisBoard::GetScoreIfPlacePiece(PieceType type, int rotation, int ox, in
 
     // 7. 현재 블록이 기존 블록들과 닿는 개수
     float countTouchingOthers = 0;
-    for (int i = 0; i < BLOCK_COUNT; ++i)
+    for (int i = 0; i < CELL_SIZE; i++)
     {
-        int x = ox + piece.blocks[rotation][i].x;
-        int y = oy + piece.blocks[rotation][i].y;
+        int x = ox + block.shapes[rotation][i].x;
+        int y = oy + block.shapes[rotation][i].y;
         for (int j = 0; j < (int)offsets.size(); j++)
         {
             int newX = x + offsets[j][0];
             int newY = y + offsets[j][1];
             if(newX < 0 || newX >= BOARD_WIDTH || newY < 0 || newY >= BOARD_HEIGHT)
 				continue;
-            if (originalGrid[newY][newX].type != PieceType::EMPTY)
+            if (originalGrid[newY][newX].type != EBlockType::EMPTY)
             {
                 countTouchingOthers++;
 			}

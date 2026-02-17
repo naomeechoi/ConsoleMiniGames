@@ -2,7 +2,6 @@
 #include "World/Level.h"
 #include "Math/Vector2.h"
 #include "System/Timer.h"
-#include "TetrisPieces.h"
 #include <deque>
 
 class TetrisPlayer;
@@ -22,31 +21,28 @@ public:
 
     virtual void OnExit() override;
     virtual void BeginPlay() override;
-    void AIModeClear();
     virtual void Tick(float deltaTime, MinigameEngine::Input* input) override;
-    void CheckAILose();
-    void GenerateUpcomingPiece();
     virtual void Draw() override;
 
 private:
-    // 상태 변경 함수
     void ChangeState(StateFunc nextState);
-
-    // 각 상태 로직
     void StateFalling(float deltaTime, MinigameEngine::Input* input);
     void StateLocking(float deltaTime, MinigameEngine::Input* input);
     void StateLineClearing(float deltaTime, MinigameEngine::Input* input); // 라인 삭제 상태 추가
     void StateGameOver(float deltaTime, MinigameEngine::Input* input);
 
-private:
-    // 공통 동작
     bool MoveDown();
     bool MoveHorizontal(bool isLeft);
     bool Rotate(MinigameEngine::Input* input);
     void HardDrop();
-    void SpawnNewPiece();
+    void SpawnNewBlock();
     bool HandleHorizontalInput(float deltaTime, MinigameEngine::Input* input);
     int GetGhostY() const;
+    void GenerateUpcomingBlock();
+    bool ValidCheck();
+
+    void CheckAILose();
+    void AIModeClear();
 
 private:
     bool hasBeganPlay = false;
@@ -69,11 +65,8 @@ private:
 
     bool canHold = true;
 
-    // AI 관련 함수
+    // AI 관련
 private:
     bool isAIPlayMode = false;
     TetrisAIMachine* aiMachine = nullptr;
-
-private:
-    bool ValidCheck();
 };

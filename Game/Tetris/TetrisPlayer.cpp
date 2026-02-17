@@ -1,157 +1,132 @@
+#define NOMINMAX
 #include "TetrisPlayer.h"
 #include "TetrisBoard.h"
+#include "System/Input.h"
 #include "Render/Renderer.h"
+#include <algorithm>
 
 using namespace MinigameEngine;
+using std::deque;
+using std::swap;
+using std::min;
+using std::max;
+
+const int Y_PADDING = 1;
+const int SHOWING_NEXT_BLOCKS_SIZE = 3;
+const int INVALID = -1;
 
 TetrisPlayer::TetrisPlayer(Vector2 worldStartPos)
 	:worldStartPos(worldStartPos)
 {
 }
 
-TetrisPlayer::~TetrisPlayer()
-{
-}
-
-void TetrisPlayer::BeginPlay()
-{
-
-}
-
-void TetrisPlayer::Tick(float deltaTime, Input* input)
-{
-}
-
 void TetrisPlayer::Draw()
 {
-    // next 작은 블록 그리기
-    DrawNextPieces();
-    DrawHoldPiece();
+    // NEXT BLOCKS
+    for (int i = 0; i < SHOWING_NEXT_BLOCKS_SIZE && i < blockQueue.size(); i++)
+    {
+        int smallBoardX = worldStartPos.x + SMALL_BOARD_DRAW_PADDING_X;
+        int smallBoardY = worldStartPos.y + Y_PADDING + (i * SMALL_BOARD_DRAW_GAP_Y);
 
-    const auto& piece = g_PieceInfo[(int)type];
+        DrawMiniBlock(blockQueue[i], smallBoardX, smallBoardY);
+    }
 
-    if (offsetX == -1 && offsetY == -1)
+    // HOLD BlOCKS
+    int smallBoardX = worldStartPos.x + SMALL_BOARD_DRAW_PADDING_X;
+    int smallBoardY = worldStartPos.y + LAST_SMALL_BOARD_PADDING_Y;
+    DrawMiniBlock(holdBlock, smallBoardX, smallBoardY);
+
+    const auto& block = BLOCK_INFO[(int)type];
+
+    if (offsetX == INVALID && offsetY == INVALID)
         return;
 
-    for (int i = 0; i < BLOCK_COUNT; ++i)
+    for (int i = 0; i < CELL_SIZE; i++)
     {
-        if (offsetY + piece.blocks[rotation][i].y < 0)
+        if (offsetY + block.shapes[rotation][i].y < 0)
             continue;
 
         Vector2 pos;
-        pos.x = worldStartPos.x + (offsetX + piece.blocks[rotation][i].x) * brickXSize;
-        pos.y = worldStartPos.y + (offsetY + piece.blocks[rotation][i].y) * brickYSize;
+        pos.x = worldStartPos.x + (offsetX + block.shapes[rotation][i].x) * BLOCK_SIZE_X;
+        pos.y = worldStartPos.y + (offsetY + block.shapes[rotation][i].y) * BLOCK_SIZE_Y;
         Renderer::Get().SubmitMultiLine(
-            brick,
+            BLOCK_STR,
             pos,
-            g_PieceInfo[(int)type].color,
-            g_PieceInfo[(int)type].color,
+            block.color,
+            block.color,
             0
         );
     }
 }
 
-void TetrisPlayer::DrawNextPieces()
+void TetrisPlayer::DrawMiniBlock(EBlockType type, int boardX, int boardY)
 {
-    int boxWidth = 12;
-    int boxHeight = 6;
+    if (type == EBlockType::EMPTY)
+        return;
 
-    for (int i = 0; i < 3; i++)
+    const auto& block = BLOCK_INFO[(int)type];
+
+    // 안전하게 첫 값으로 초기화 (매직넘버 제거)
+    int minX = block.shapes[0][0].x;
+    int maxX = minX;
+    int minY = block.shapes[0][0].y;
+    int maxY = minY;
+
+    for (int j = 0; j < CELL_SIZE; j++)
     {
-        if (i >= pieceQueue.size()) break;
-        PieceType nextType = pieceQueue[i];
-        const auto& piece = g_PieceInfo[(int)nextType];
+        int bx = block.shapes[0][j].x;
+        int by = block.shapes[0][j].y;
 
-        // 1. 블록의 실제 차지 범위 계산 (중앙 정렬용)
-        int minX = 99, maxX = -99, minY = 99, maxY = -99;
-        for (int j = 0; j < 4; j++)
-        {
-            int bx = piece.blocks[0][j].x;
-            int by = piece.blocks[0][j].y;
-            if (bx < minX) minX = bx; if (bx > maxX) maxX = bx;
-            if (by < minY) minY = by; if (by > maxY) maxY = by;
-        }
-
-        // 2. 블록의 실제 출력 크기
-        int pieceWidth = (maxX - minX + 1) * smallBrickXSize;
-        int pieceHeight = (maxY - minY + 1) * smallBrickYSize;
-
-        // 3. 박스 내 중앙 시작점 계산 (여백을 반으로 나눔)
-        float centerXOffset = (boxWidth - pieceWidth) / 2.0f;
-        float centerYOffset = (boxHeight - pieceHeight) / 2 + (boxHeight - pieceHeight) % 2;
-
-        float boxX = worldStartPos.x + 42;
-        float boxY = worldStartPos.y + 1 + (i * 9);
-
-        for (int j = 0; j < 4; j++)
-        {
-            Vector2 pos;
-            // (블록 좌표 - 최소값)을 해서 0부터 시작하게 만든 뒤, 중앙 오프셋을 더함
-            pos.x = boxX + centerXOffset + (piece.blocks[0][j].x - minX) * smallBrickXSize;
-            pos.y = boxY + centerYOffset + (piece.blocks[0][j].y - minY) * smallBrickYSize;
-
-            Renderer::Get().SubmitMultiLine(smallBrick, pos, piece.color, piece.color, 0);
-        }
-    }
-}
-
-void TetrisPlayer::DrawHoldPiece()
-{
-    int boxWidth = 12;
-    int boxHeight = 6;
-
-    const auto& piece = g_PieceInfo[(int)holdPiece];
-
-    // 1. 블록의 실제 차지 범위 계산 (중앙 정렬용)
-    int minX = 99, maxX = -99, minY = 99, maxY = -99;
-    for (int j = 0; j < 4; j++)
-    {
-        int bx = piece.blocks[0][j].x;
-        int by = piece.blocks[0][j].y;
-        if (bx < minX) minX = bx; if (bx > maxX) maxX = bx;
-        if (by < minY) minY = by; if (by > maxY) maxY = by;
+        minX = min(minX, bx);
+        maxX = max(maxX, bx);
+        minY = min(minY, by);
+        maxY = max(maxY, by);
     }
 
-    // 2. 블록의 실제 출력 크기
-    int pieceWidth = (maxX - minX + 1) * smallBrickXSize;
-    int pieceHeight = (maxY - minY + 1) * smallBrickYSize;
+    int blockWidth = (maxX - minX + 1) * SMALL_BLOCK_SIZE_X;
+    int blockHeight = (maxY - minY + 1) * SMALL_BLOCK_SIZE_Y;
 
-    // 3. 박스 내 중앙 시작점 계산 (여백을 반으로 나눔)
-    float centerXOffset = (boxWidth - pieceWidth) / 2.0f;
-    float centerYOffset = (boxHeight - pieceHeight) / 2 + (boxHeight - pieceHeight) % 2;
+    int centerXOffset = (SMALL_BOARD_EDGE_SIZE_X - blockWidth) / 2;
+    int centerYOffset = (SMALL_BOARD_EDGE_SIZE_Y - blockHeight) / 2;
 
-    float boxX = worldStartPos.x + 42;
-    float boxY = worldStartPos.y + 42 - 8;
-
-    for (int j = 0; j < 4; j++)
+    for (int j = 0; j < CELL_SIZE; j++)
     {
         Vector2 pos;
-        // (블록 좌표 - 최소값)을 해서 0부터 시작하게 만든 뒤, 중앙 오프셋을 더함
-        pos.x = boxX + centerXOffset + (piece.blocks[0][j].x - minX) * smallBrickXSize;
-        pos.y = boxY + centerYOffset + (piece.blocks[0][j].y - minY) * smallBrickYSize;
 
-        Renderer::Get().SubmitMultiLine(smallBrick, pos, piece.color, piece.color, 0);
+        pos.x = boardX + centerXOffset +
+            (block.shapes[0][j].x - minX) * SMALL_BLOCK_SIZE_X;
+
+        pos.y = boardY + centerYOffset +
+            (block.shapes[0][j].y - minY) * SMALL_BLOCK_SIZE_Y;
+
+        Renderer::Get().SubmitMultiLine(
+            SMALL_BLOCK_STR,
+            pos,
+            block.color,
+            block.color,
+            0
+        );
     }
 }
 
 void TetrisPlayer::DrawGhost(int ghostOffsetY)
 {
-    const auto& piece = g_PieceInfo[(int)type];
+    const auto& block = BLOCK_INFO[(int)type];
 
-    for (int i = 0; i < BLOCK_COUNT; ++i)
+    for (int i = 0; i < CELL_SIZE; i++)
     {
-        if (ghostOffsetY + piece.blocks[rotation][i].y < 0)
+        if (ghostOffsetY + block.shapes[rotation][i].y < 0)
             continue;
 
         Vector2 pos;
         pos.x = worldStartPos.x +
-            (offsetX + piece.blocks[rotation][i].x) * brickXSize;
+            (offsetX + block.shapes[rotation][i].x) * BLOCK_SIZE_X;
 
         pos.y = worldStartPos.y +
-            (ghostOffsetY + piece.blocks[rotation][i].y) * brickYSize;
+            (ghostOffsetY + block.shapes[rotation][i].y) * BLOCK_SIZE_Y;
 
         Renderer::Get().SubmitMultiLine(
-            brick,
+            BLOCK_STR,
             pos,
             Color::Gray,
             Color::Gray,
@@ -162,17 +137,17 @@ void TetrisPlayer::DrawGhost(int ghostOffsetY)
 
 void TetrisPlayer::Clear()
 {
-    type = PieceType::EMPTY;
+    type = EBlockType::EMPTY;
     rotation = 0;
 
-    offsetX = -1;
-    offsetY = -1;
+    offsetX = INVALID;
+    offsetY = INVALID;
 
-	holdPiece = PieceType::EMPTY;
-	pieceQueue.clear();
+	holdBlock = EBlockType::EMPTY;
+	blockQueue.clear();
 }
 
-void TetrisPlayer::Spawn(PieceType t, int x, int y, int rot)
+void TetrisPlayer::Spawn(EBlockType t, int x, int y, int rot)
 {
     type = t;
     rotation = rot;
@@ -196,7 +171,7 @@ void TetrisPlayer::MoveDown()
 
 void TetrisPlayer::Rotate()
 {
-    rotation = (rotation + 1) % ROTATION_COUNT;
+    rotation = (rotation + 1) % ROTATION_SIZE;
 }
 
 void TetrisPlayer::SetOffset(int offsetX, int offsetY)
@@ -210,39 +185,39 @@ void TetrisPlayer::SetRotation(int rotation)
 	this->rotation = rotation;
 }
 
-void TetrisPlayer::InsertPieceQueue(PieceType t)
+void TetrisPlayer::InsertBlockQueue(EBlockType t)
 {
-    if((int)pieceQueue.size() < 5)
-        pieceQueue.push_back(t);
+    if((int)blockQueue.size() < 5)
+        blockQueue.push_back(t);
 }
 
-PieceType TetrisPlayer::GetNextPiece()
+EBlockType TetrisPlayer::GetNextBlock()
 {
-    if (pieceQueue.empty())
-        return PieceType::EMPTY;
+    if (blockQueue.empty())
+        return EBlockType::EMPTY;
     
-	PieceType nextPiece = pieceQueue.front();
-	pieceQueue.pop_front();
-    return nextPiece;
+	EBlockType nextBlock = blockQueue.front();
+	blockQueue.pop_front();
+    return nextBlock;
 }
 
-void TetrisPlayer::SetHoldPiece()
+bool TetrisPlayer::SetHoldBlockAndCheckNeedSpawn()
 {
-	PieceType prevHopdPiece = holdPiece;
-    holdPiece = type;
-
-    if (prevHopdPiece != PieceType::EMPTY)
+    if (holdBlock == EBlockType::EMPTY)
     {
-        pieceQueue.push_front(prevHopdPiece);
+        holdBlock = type;
+        return true;
     }
+    swap(type, holdBlock);
+    return false;
 }
 
-void TetrisPlayer::SetPieceQueue(std::deque<PieceType> pieceQueue)
+void TetrisPlayer::SetBlockQueue(deque<EBlockType> blockQueue)
 {
-    this->pieceQueue = pieceQueue;
+    this->blockQueue = blockQueue;
 }
 
-std::deque<PieceType> TetrisPlayer::GetPieceQueue()
+deque<EBlockType> TetrisPlayer::GetBlockQueue()
 {
-    return pieceQueue;
+    return blockQueue;
 }

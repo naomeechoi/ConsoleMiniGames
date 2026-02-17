@@ -1,22 +1,22 @@
 #pragma once
 #include "System/Timer.h"
-#include "System/Input.h"
-#include "TetrisPieces.h"
-#include <queue>
+#include "TetrisBlocks.h"
+#include <deque>
+
+namespace MinigameEngine {
+    class Input;
+}
 
 class TetrisPlayer
 {
 public:
 	TetrisPlayer(MinigameEngine::Vector2 worldStartPos);
-	virtual ~TetrisPlayer();
 
-    void BeginPlay();
-    void Tick(float deltaTime, MinigameEngine::Input* input);
     void Draw();
     void DrawGhost(int ghostOffSetY);
     void Clear();
 
-    void Spawn(PieceType t, int x, int y, int rot);
+    void Spawn(EBlockType t, int x, int y, int rot);
 
     void MoveHorizontal(bool isLeft);
     void MoveDown();
@@ -24,31 +24,30 @@ public:
     void Rotate();
 
 
-    PieceType GetPieceType() const { return type; }
+    EBlockType GetBlockType() const { return type; }
     int GetRotation() const { return rotation; }
     int GetOffsetX() const { return offsetX; }
     int GetOffsetY() const { return offsetY; }
     void SetOffset(int offsetX, int offsetY);
     void SetRotation(int rotation);
-    void InsertPieceQueue(PieceType t);
-    PieceType GetNextPiece();
-	void SetHoldPiece();
-    void SetPieceQueue(std::deque<PieceType> pieceQueue);
-    std::deque<PieceType> GetPieceQueue();
+    void InsertBlockQueue(EBlockType t);
+    EBlockType GetNextBlock();
+    bool SetHoldBlockAndCheckNeedSpawn();
+    void SetBlockQueue(std::deque<EBlockType> blockQueue);
+    std::deque<EBlockType> GetBlockQueue();
 
 private:
-    void DrawNextPieces();
-    void DrawHoldPiece();
+    void DrawMiniBlock(EBlockType type, int boardX, int boardY);
 
 private:
-    PieceType type;
+    EBlockType type;
     int rotation;
 
     int offsetX = -1;
     int offsetY = -1;
 
-	std::deque<PieceType> pieceQueue;
-	PieceType holdPiece = PieceType::EMPTY;
+	std::deque<EBlockType> blockQueue;
+	EBlockType holdBlock = EBlockType::EMPTY;
 
     MinigameEngine::Vector2 worldStartPos;
 };
