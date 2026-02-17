@@ -369,10 +369,10 @@ void TetrisBoard::AddTrashLines(int count)
 
 void TetrisBoard::LoadBoardsEdgeTxt()
 {
-    boardEdge = FileIO::ReadFileFast("../Assets/Tetris/BoardEdge.txt");
+    boardEdge = FileIO::ReadFile("../Assets/Tetris/BoardEdge.txt");
     FileIO::RemoveCR(boardEdge);
 
-    oneBrickEdge = FileIO::ReadFileFast("../Assets/Tetris/OneBrickEdge.txt");
+    oneBrickEdge = FileIO::ReadFile("../Assets/Tetris/OneBrickEdge.txt");
     FileIO::RemoveCR(oneBrickEdge);
 }
 

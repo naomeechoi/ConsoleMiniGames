@@ -125,10 +125,7 @@ namespace MinigameEngine
 
 				WORD color = (WORD)command.color;
 				WORD bg = (WORD)command.bgColor;
-				if (!debugSet.empty() && debugSet.count(Vector2(x, command.position.y)))
-				{
-					bg = 4;
-				}
+
 				frame->charInfoArray[index].Char.AsciiChar = command.text[sourceIndex];
 				frame->charInfoArray[index].Attributes = (color & 0x0F) | (bg << 4);
 				frame->sortingOrderArray[index] = command.sortingOrder;

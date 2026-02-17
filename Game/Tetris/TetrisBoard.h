@@ -14,7 +14,7 @@ class TetrisBoard
     struct SCell
     {
         EBlockType type = EBlockType::EMPTY;
-        float flashFrame;
+        float flashFrame = 0.0f;
 	};
 
 public:

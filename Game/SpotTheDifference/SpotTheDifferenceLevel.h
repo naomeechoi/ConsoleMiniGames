@@ -2,42 +2,42 @@
 #include "World/Level.h"
 #include "Math/Vector2.h"
 #include "System/Timer.h"
+#include <vector>
 #include <string>
 
-using namespace MinigameEngine;
 class SpotTheDifferenceMode;
 class UITop;
 class UILoadingBar;
 class UICorrectCount;
 class UIColorEffect;
 
-class SpotTheDifferenceLevel : public Level
+class SpotTheDifferenceLevel : public MinigameEngine::Level
 {
 	struct Cursor
 	{
-		Vector2 pos;
-		Vector2 topLeft;
+		MinigameEngine::Vector2 pos;
+		MinigameEngine::Vector2 topLeft;
 
-		void Init(Vector2 topLeft);
+		void Init(MinigameEngine::Vector2 topLeft);
 		void Move(int dx, int dy);
-		void Tick(float deltaTime, Input* input);
+		void Tick(float deltaTime, MinigameEngine::Input* input);
 	};
 public:
-	SpotTheDifferenceLevel();
 	~SpotTheDifferenceLevel();
 
 	virtual void BeginPlay() override;
 	virtual void OnExit() override;
-	virtual void Tick(float deltaTime, Input* input) override;
+	virtual void Tick(float deltaTime, MinigameEngine::Input* input) override;
 	virtual void Draw() override;
 
 private:
-	void LoadText();
+	void LoadPaint();
 	void MakeDifferences();
 	void DrawPaint();
-	int GetIndexAtPos(Vector2 pos) const;
-	Vector2 GetPosAtIndex(int idx, Vector2 topLeft) const;
+	int GetIndexAtPos(MinigameEngine::Vector2 pos) const;
+	MinigameEngine::Vector2 GetPosAtIndex(int idx, MinigameEngine::Vector2 topLeft) const;
 	bool ValidCheck();
+	void ShowGameResult(bool isSuccess);
 
 private:
 	bool hasBeganPlay = false;
@@ -52,14 +52,11 @@ private:
 
 	// Paint
 	std::vector<std::pair<std::string, std::string>> paints;
-	std::string* paintStr = nullptr;
-	std::string* paintStr2 = nullptr;
+	int currentPaintIdx = 0;
 
 private:
 	Cursor cursor;
-	Timer timer;
-	int answerCount = 20;
-	int totalWidth = 0;
-	int startXPos = 0;
-	int rightStartXPos = 0;
+	MinigameEngine::Timer timer;
+	int leftPaintStartPosX = 0;
+	int rightPaintStartPosX = 0;
 };

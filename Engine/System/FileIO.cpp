@@ -12,7 +12,7 @@ using std::remove;
 
 namespace MinigameEngine
 {
-    string FileIO::ReadFileFast(const string& path)
+    string FileIO::ReadFile(const string& path)
     {
         ifstream file(path, ios::binary | ios::ate);
         if (!file)
@@ -36,5 +36,30 @@ namespace MinigameEngine
             remove(buffer.begin(), buffer.end(), '\r'),
             buffer.end()
         );
+    }
+
+    string FileIO::ReadFixedWidthText(const string& path, size_t width)
+    {
+        ifstream file(path);
+        if (!file)
+            throw std::runtime_error("open failed");
+
+        string result;
+        string line;
+
+        while (std::getline(file, line))
+        {
+            RemoveCR(line);
+
+            if (line.size() > width)
+                line = line.substr(0, width);
+            else if (line.size() < width)
+                line.append(width - line.size(), ' ');
+
+            result += line;
+            result += '\n';
+        }
+
+        return result;
     }
 }

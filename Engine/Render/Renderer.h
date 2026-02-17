@@ -40,10 +40,6 @@ namespace MinigameEngine
 		void SubmitMultiLine(const char* text, const Vector2& position, Color color = Color::White, Color bg = Color::Black, int sortingOrder = 0);
 		static Renderer& Get();
 
-	public:
-		void SetDebugMode(std::unordered_set<Vector2> debugSet) { this->debugSet = debugSet; };
-		void OffDebugMode() { debugSet.clear(); };
-
 	private:
 		void Clear();
 		void Present();
@@ -57,6 +53,5 @@ namespace MinigameEngine
 		std::vector<RenderCommand> renderQueue;
 
 		static Renderer* instance;
-		std::unordered_set<Vector2> debugSet;
 	};
 }
