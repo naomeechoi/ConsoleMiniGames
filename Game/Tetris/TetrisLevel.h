@@ -25,23 +25,26 @@ public:
     virtual void Draw() override;
 
 private:
+    bool ValidCheck();
+    void SetTimers(bool isReset);
+    void GenerateUpcomingBlock();
+    int GetGhostY() const;
+
     void ChangeState(StateFunc nextState);
     void StateFalling(float deltaTime, MinigameEngine::Input* input);
     void StateLocking(float deltaTime, MinigameEngine::Input* input);
-    void StateLineClearing(float deltaTime, MinigameEngine::Input* input); // 라인 삭제 상태 추가
+    void StateSpawnNewBlock(float deltaTime, MinigameEngine::Input* input); // 라인 삭제 상태 추가
     void StateGameOver(float deltaTime, MinigameEngine::Input* input);
 
+    void SpawnNewBlock();
+    bool MoveHorizontal(float deltaTime, MinigameEngine::Input* input);
     bool MoveDown();
-    bool MoveHorizontal(bool isLeft);
     bool Rotate(MinigameEngine::Input* input);
     void HardDrop();
-    void SpawnNewBlock();
-    bool HandleHorizontalInput(float deltaTime, MinigameEngine::Input* input);
-    int GetGhostY() const;
-    void GenerateUpcomingBlock();
-    bool ValidCheck();
+    void ToggleHold();
 
-    void CheckAILose();
+    void ToggleAIMode();
+    void AITick(float deltaTime);
     void AIModeClear();
 
 private:

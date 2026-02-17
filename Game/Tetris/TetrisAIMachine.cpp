@@ -1,6 +1,7 @@
 #include "TetrisAIMachine.h"
 #include "TetrisBoard.h"
 #include "TetrisPlayer.h"
+#include "Util/Delete.h"
 #include <cassert>
 #include <limits>
 
@@ -23,17 +24,8 @@ TetrisAIMachine::TetrisAIMachine(Vector2 worldPos, float lockTime)
 
 TetrisAIMachine::~TetrisAIMachine()
 {
-    if(aiPlayer)
-    {
-        delete aiPlayer;
-        aiPlayer = nullptr;
-    }
-
-    if (aiBoard)
-    {
-        delete aiBoard;
-        aiBoard = nullptr;
-    }
+    SafeDelete(aiPlayer);
+    SafeDelete(aiBoard);
 }
 
 void TetrisAIMachine::Clear()
@@ -277,10 +269,10 @@ void TetrisAIMachine::AIStateLocking(float deltaTime)
     aiBoard->PlaceBlock(aiPlayer->GetBlockType(), aiPlayer->GetRotation(),
         aiPlayer->GetOffsetX(), aiPlayer->GetOffsetY());
 
-    ChangeAIState(&TetrisAIMachine::AIStateLineClearing);
+    ChangeAIState(&TetrisAIMachine::AIStateSpawnNewBlock);
 }
 
-void TetrisAIMachine::AIStateLineClearing(float deltaTime)
+void TetrisAIMachine::AIStateSpawnNewBlock(float deltaTime)
 {
     SpawnAINewBlock();
 }

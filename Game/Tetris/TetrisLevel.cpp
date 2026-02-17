@@ -12,13 +12,10 @@
 #include "UI/UIMessage.h"
 #include <limits>
 
-const int BOARDS_WIDTH = 55;
-const int MAIN_BOARD_HEIGHT = 42;
 const int MAX_LOCK_MOVES = 15;
 const int BLOCK_QUEUE_MAX_SIZE = 5;
 const float GRAVITY_TIME = 1.0f;
 const int MESSAGE_UI_OFFSET_X = 3;
-const std::string AI_USAGE_GUIDE = "Press F1 to toggle AI Battle Mode.";
 const float MOVE_INTERVAL = 0.05f;
 const float LOCK_DELAY_INTERVAL = 0.5f;
 
@@ -47,15 +44,18 @@ void TetrisLevel::OnExit()
         messageUI->Clear();
 
     curState = nullptr;
-    gravityTimer.Reset();
-    softDropTimer.Reset();
-    horizontalTimer.Reset();
-    lockDelayTimer.Reset();
+    SetTimers(false);
 
     lockMoveCount = 0;
 
     // AI 상태 초기화
     AIModeClear();
+
+    SafeDelete(player);
+    SafeDelete(board);
+    SafeDelete(aiMachine);
+    SafeDelete(topUI);
+    SafeDelete(messageUI);
 }
 
 void TetrisLevel::BeginPlay()
@@ -63,12 +63,16 @@ void TetrisLevel::BeginPlay()
     if (hasBeganPlay)
         return;
 
-    int totalBoardWidth = BOARDS_WIDTH * 2;
-    int remainingSpace = displaySize.x - totalBoardWidth;
-    int spacing = remainingSpace / 3;
+    const int BOARDS_SIZE = 2;
+    const int BOARDS_WIDTH = 55;
+    const int TOTAL_BOARDS_WIDTH = BOARDS_WIDTH * BOARDS_SIZE;
+    const int MAIN_BOARD_HEIGHT = 42;
+
+    const int SPACES_SIZE = 3;
+    const int SPACE = (displaySize.x - TOTAL_BOARDS_WIDTH) / SPACES_SIZE;
 
     Vector2 worldPos;
-    worldPos.x = spacing;
+    worldPos.x = SPACE;
     worldPos.y = (displaySize.y - MAIN_BOARD_HEIGHT) / 2 + 1;
 
     if (!player)
@@ -77,7 +81,7 @@ void TetrisLevel::BeginPlay()
     if (!board)
         board = new TetrisBoard(worldPos);
 
-    worldPos.x += (BOARDS_WIDTH + spacing);
+    worldPos.x += (BOARDS_WIDTH + SPACE);
 
     if (!aiMachine)
         aiMachine = new TetrisAIMachine(worldPos, 0.5f);
@@ -92,15 +96,14 @@ void TetrisLevel::BeginPlay()
         RequestChangeLevel((int)LevelType::Menu);
         return;
     }
+
     hasBeganPlay = true;
 
-    messageUI->Start(displaySize.x - 2, Vector2(UI_START_POS_X, displaySize.y - MESSAGE_UI_OFFSET_X), AI_USAGE_GUIDE, " ");
+    messageUI->Start(displaySize.x,
+        Vector2(UI_START_POS_X, displaySize.y - MESSAGE_UI_OFFSET_X),
+        "Press F1 to toggle AI Battle Mode.", " ");
 
-    // 타이머 초기 설정
-    gravityTimer.SetTargetTime(GRAVITY_TIME);
-    softDropTimer.SetTargetTime(MOVE_INTERVAL);
-    horizontalTimer.SetTargetTime(MOVE_INTERVAL);
-    lockDelayTimer.SetTargetTime(LOCK_DELAY_INTERVAL);
+    SetTimers(true);
     
     for (int i = 0; i < BLOCK_QUEUE_MAX_SIZE; i++)
         GenerateUpcomingBlock();
@@ -108,15 +111,13 @@ void TetrisLevel::BeginPlay()
     SpawnNewBlock();
 }
 
-void TetrisLevel::ChangeState(StateFunc nextState)
-{
-    curState = nextState;
-}
-
 void TetrisLevel::Tick(float deltaTime, MinigameEngine::Input* input)
 {
     if (!ValidCheck())
+    {
+        RequestChangeLevel((int)LevelType::Menu);
         return;
+    }
 
     if (input->IsKeyPressed(VK_ESCAPE))
     {
@@ -124,76 +125,95 @@ void TetrisLevel::Tick(float deltaTime, MinigameEngine::Input* input)
         return;
     }
 
-    if (input->IsKeyPressed(VK_SHIFT) && canHold)
-    {   
-        if(player->SetHoldBlockAndCheckNeedSpawn())
-            ChangeState(&TetrisLevel::StateLineClearing);
-		canHold = false;
+    if (input->IsKeyPressed(VK_SHIFT))
+    {
+        ToggleHold();
     }
 
     if (input->IsKeyPressed(VK_F1))
     {
-        if (!isAIPlayMode)
-        {
-            isAIPlayMode = true;
-            std::deque<EBlockType> tempQ = player->GetBlockQueue();
-            tempQ.push_front(player->GetBlockType());
-            aiMachine->BeginPlay(tempQ);
-        }
-        else
-        {
-            AIModeClear();
-        }
+        ToggleAIMode();
     }
 
     board->Tick(deltaTime);
 
-    // 현재 상태 함수 실행
     if (curState)
         (this->*curState)(deltaTime, input);
 
-    if (isAIPlayMode && aiMachine)
-    {
-        aiMachine->Tick(deltaTime);
-
-        if (auto cleanSize = board->ConsumeCleanLineCount())
-        {
-            // ai보드에 블럭 쌓기
-            aiMachine->AddTrashLines(*cleanSize);
-        }
-
-        board->AddTrashLines(aiMachine->GetCleanCount());
-    }
+    AITick(deltaTime);
 
     GenerateUpcomingBlock();
-
-    CheckAILose();
 }
 
-void TetrisLevel::CheckAILose()
+void TetrisLevel::Draw()
 {
-    if (!isAIPlayMode)
-        return;
     if (!ValidCheck())
         return;
 
-    if (auto aiLose = aiMachine->ConsumeRequestedGameEnd())
+    board->Draw();
+    player->DrawGhost(GetGhostY());
+    player->Draw();
+    aiMachine->Draw();
+    topUI->Draw();
+    messageUI->Draw();
+}
+
+bool TetrisLevel::ValidCheck()
+{
+    const int pointSize = 5;
+    void* checks[pointSize] = { player, board, topUI, messageUI, aiMachine };
+    for (int i = 0; i < pointSize; i++)
     {
-        if (!*aiLose)
-            return;
-        RequestShowResult(EResult::success);
-        RequestChangeLevel((int)LevelType::GameResult);
+        if (checks[i] == nullptr)
+            return false;
+    }
+    return true;
+}
+
+void TetrisLevel::SetTimers(bool isNotReset)
+{
+    if (isNotReset)
+    {
+        gravityTimer.SetTargetTime(GRAVITY_TIME);
+        softDropTimer.SetTargetTime(MOVE_INTERVAL);
+        horizontalTimer.SetTargetTime(MOVE_INTERVAL);
+        lockDelayTimer.SetTargetTime(LOCK_DELAY_INTERVAL);
+    }
+    else
+    {
+        gravityTimer.Reset();
+        softDropTimer.Reset();
+        horizontalTimer.Reset();
+        lockDelayTimer.Reset();
     }
 }
 
 void TetrisLevel::GenerateUpcomingBlock()
 {
-    EBlockType futureBlock = (EBlockType)Random::Random((int)EBlockType::I, (int)EBlockType::Z);
-    player->InsertBlockQueue(futureBlock);
-    if (isAIPlayMode && aiMachine)
+    if (!ValidCheck())
+        return;
+
+    EBlockType upcomingBlock = (EBlockType)Random::Random((int)EBlockType::I, (int)EBlockType::Z);
+    player->InsertBlockQueue(upcomingBlock);
+    if (isAIPlayMode)
     {
-        aiMachine->InsertBlockToQueue(futureBlock);
+        aiMachine->InsertBlockToQueue(upcomingBlock);
     }
+}
+
+int TetrisLevel::GetGhostY() const
+{
+    int gy = player->GetOffsetY();
+    while (board->CanPlace(player->GetBlockType(), player->GetRotation(), player->GetOffsetX(), gy + 1))
+    {
+        gy++;
+    }
+    return gy;
+}
+
+void TetrisLevel::ChangeState(StateFunc nextState)
+{
+    curState = nextState;
 }
 
 void TetrisLevel::StateFalling(float deltaTime, MinigameEngine::Input* input)
@@ -209,11 +229,9 @@ void TetrisLevel::StateFalling(float deltaTime, MinigameEngine::Input* input)
         gravityTimer.Reset();
     }
 
-    // 2. 조작 처리
-    HandleHorizontalInput(deltaTime, input);
+    MoveHorizontal(deltaTime, input);
     Rotate(input);
 
-    // 3. 소프트 드롭
     if (input->IsKeyHeld(VK_DOWN))
     {
         softDropTimer.Tick(deltaTime);
@@ -227,33 +245,30 @@ void TetrisLevel::StateFalling(float deltaTime, MinigameEngine::Input* input)
             softDropTimer.Reset();
         }
     }
-
-    // 4. 하드 드롭
-    if (input->IsKeyPressed(VK_SPACE))
+    else if (input->IsKeyPressed(VK_SPACE))
     {
         HardDrop();
         ChangeState(&TetrisLevel::StateLocking);
-        // 하드드롭 시 즉시 고정되도록 타이머 강제 종료 효과
-        lockDelayTimer.Tick(10.0f);
     }
 }
 
 void TetrisLevel::StateLocking(float deltaTime, MinigameEngine::Input* input)
 {
-    if(HandleHorizontalInput(deltaTime, input))
+    if(MoveHorizontal(deltaTime, input))
 		lockMoveCount++;
     if(Rotate(input))
 		lockMoveCount++;
 
+    // no more moves ard allowed in locking state 
     if (lockMoveCount >= MAX_LOCK_MOVES)
     {
         board->PlaceBlock(player->GetBlockType(), player->GetRotation(),
             player->GetOffsetX(), player->GetOffsetY());
-        ChangeState(&TetrisLevel::StateLineClearing);
+        ChangeState(&TetrisLevel::StateSpawnNewBlock);
         return;
     }
 
-    // 조작 후 다시 아래로 갈 수 있게 되었다면 Falling으로 복귀
+    // can fall again
     if (board->CanPlace(player->GetBlockType(), player->GetRotation(),
         player->GetOffsetX(), player->GetOffsetY() + 1))
     {
@@ -261,7 +276,7 @@ void TetrisLevel::StateLocking(float deltaTime, MinigameEngine::Input* input)
         return;
     }
 
-    // Lock Delay 진행
+    // check if the lock time is finised
     lockDelayTimer.Tick(deltaTime);
     if (lockDelayTimer.IsTimeOut())
     {
@@ -269,11 +284,11 @@ void TetrisLevel::StateLocking(float deltaTime, MinigameEngine::Input* input)
             player->GetOffsetX(), player->GetOffsetY());
 
         canHold = true;
-        ChangeState(&TetrisLevel::StateLineClearing);
+        ChangeState(&TetrisLevel::StateSpawnNewBlock);
     }
 }
 
-void TetrisLevel::StateLineClearing(float deltaTime, MinigameEngine::Input* input)
+void TetrisLevel::StateSpawnNewBlock(float deltaTime, MinigameEngine::Input* input)
 {
     SpawnNewBlock();
 }
@@ -302,21 +317,28 @@ void TetrisLevel::SpawnNewBlock()
     gravityTimer.Reset();
 }
 
-bool TetrisLevel::HandleHorizontalInput(float deltaTime, MinigameEngine::Input* input)
+bool TetrisLevel::MoveHorizontal(float deltaTime, MinigameEngine::Input* input)
 {
     if (input->IsKeyHeld(VK_LEFT) || input->IsKeyHeld(VK_RIGHT))
     {
+        bool isLeft = input->IsKeyHeld(VK_LEFT);
         horizontalTimer.Tick(deltaTime);
         if (horizontalTimer.IsTimeOut())
         {
             horizontalTimer.Reset();
-            return MoveHorizontal(input->IsKeyHeld(VK_LEFT));
+            int nextX = player->GetOffsetX() + (isLeft ? - 1 : 1);
+            if (board->CanPlace(player->GetBlockType(), player->GetRotation(), nextX, player->GetOffsetY()))
+            {
+                player->MoveHorizontal(isLeft);
+                return true;
+            }
         }
     }
     else
     {
         horizontalTimer.Reset();
     }
+    return false;
 }
 
 bool TetrisLevel::MoveDown()
@@ -330,29 +352,28 @@ bool TetrisLevel::MoveDown()
     return false;
 }
 
-bool TetrisLevel::MoveHorizontal(bool isLeft)
-{
-    int nextX = isLeft ? player->GetOffsetX() - 1 : player->GetOffsetX() + 1;
-    if (board->CanPlace(player->GetBlockType(), player->GetRotation(), nextX, player->GetOffsetY()))
-    {
-        player->MoveHorizontal(isLeft);
-        return true;
-    }
-
-    return false;
-}
-
 bool TetrisLevel::Rotate(MinigameEngine::Input* input)
 {
-    if (!input->IsKeyPressed(VK_UP)) return false;
+    if (!input->IsKeyPressed(VK_UP))
+        return false;
 
     int from = player->GetRotation();
     int to = (from + 1) % ROTATION_SIZE;
     EBlockType type = player->GetBlockType();
 
-    // I 미노인지 아닌지에 따라 루프 횟수와 테이블만 교체
-    const int (*kickTable)[2] = (type == EBlockType::I) ? I_KICK_SIMPLE : COMMON_KICK;
-    int testCount = (type == EBlockType::I) ? 9 : 5;
+    const int (*kickTable)[2];
+    int testCount;
+
+    if (type == EBlockType::I)
+    {
+        kickTable = I_KICK_SIMPLE;
+        testCount = sizeof(I_KICK_SIMPLE) / sizeof(I_KICK_SIMPLE[0]);
+    }
+    else
+    {
+        kickTable = COMMON_KICK;
+        testCount = sizeof(COMMON_KICK) / sizeof(COMMON_KICK[0]);
+    }
 
     for (int i = 0; i < testCount; ++i)
     {
@@ -372,45 +393,65 @@ bool TetrisLevel::Rotate(MinigameEngine::Input* input)
 void TetrisLevel::HardDrop()
 {
     player->SetOffset(player->GetOffsetX(), GetGhostY());
+    lockDelayTimer.Tick(LOCK_DELAY_INTERVAL);
 }
 
-int TetrisLevel::GetGhostY() const
+void TetrisLevel::ToggleHold()
 {
-    int gy = player->GetOffsetY();
-    while (board->CanPlace(player->GetBlockType(), player->GetRotation(), player->GetOffsetX(), gy + 1))
-    {
-        gy++;
-    }
-    return gy;
-}
-
-void TetrisLevel::Draw()
-{
-    if (!ValidCheck())
+    if (!canHold)
         return;
 
-    board->Draw();
-    player->DrawGhost(GetGhostY());
-    player->Draw();
-    aiMachine->Draw();
-    topUI->Draw();
-    messageUI->Draw();
+    if (player->SetHoldBlockAndCheckNeedSpawn())
+        ChangeState(&TetrisLevel::StateSpawnNewBlock);
+    canHold = false;
+}
+
+void TetrisLevel::ToggleAIMode()
+{
+    if (!isAIPlayMode)
+    {
+        isAIPlayMode = true;
+        std::deque<EBlockType> tempQ = player->GetBlockQueue();
+        tempQ.push_front(player->GetBlockType());
+        aiMachine->BeginPlay(tempQ);
+    }
+    else
+    {
+        AIModeClear();
+    }
+}
+
+void TetrisLevel::AITick(float deltaTime)
+{
+    if (!isAIPlayMode)
+        return;
+
+    if (!aiMachine)
+        return;
+
+    aiMachine->Tick(deltaTime);
+
+    // add trash lines
+    if (auto cleanSize = board->ConsumeCleanLineCount())
+        aiMachine->AddTrashLines(*cleanSize);
+    board->AddTrashLines(aiMachine->GetCleanCount());
+
+    // check ai lose
+    if (auto aiLose = aiMachine->ConsumeRequestedGameEnd())
+    {
+        if (*aiLose)
+        {
+            RequestShowResult(EResult::success);
+            RequestChangeLevel((int)LevelType::GameResult);
+            return;
+        }
+    }
 }
 
 void TetrisLevel::AIModeClear()
 {
-    aiMachine->Clear();
-    isAIPlayMode = false;
-}
-
-bool TetrisLevel::ValidCheck()
-{
-    if (!player
-        || !board
-        || !topUI
-        || !messageUI
-        || !aiMachine)
-        return false;
-
-    return true;
+    if (aiMachine) {
+        aiMachine->Clear();
+        isAIPlayMode = false;
+    }
 }

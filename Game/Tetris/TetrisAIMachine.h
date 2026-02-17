@@ -47,7 +47,7 @@ private:
     // 각 상태 로직
     void AIStateFalling(float deltaTime);
     void AIStateLocking(float deltaTime);
-    void AIStateLineClearing(float deltaTime); // 라인 삭제 상태 추가
+    void AIStateSpawnNewBlock(float deltaTime); // 라인 삭제 상태 추가
     void AIStateGameOver(float deltaTime);
 
     void AIRotate();
