@@ -3,10 +3,6 @@
 #include "TetrisBlocks.h"
 #include <deque>
 
-namespace MinigameEngine {
-    class Input;
-}
-
 class TetrisPlayer
 {
 public:

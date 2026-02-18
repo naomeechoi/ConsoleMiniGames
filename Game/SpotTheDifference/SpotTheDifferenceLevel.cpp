@@ -1,4 +1,3 @@
-#define NOMINMAX
 #include "SpotTheDifferenceLevel.h"
 #include "SpotTheDifferenceMode.h"
 #include "UI/UITop.h"
@@ -294,14 +293,14 @@ void SpotTheDifferenceLevel::MakeDifferences()
 void SpotTheDifferenceLevel::DrawPaint()
 {
 	// left paint
-	Renderer::Get().SubmitMultiLine(
+	Renderer::Get().Submit(
 		paints[currentPaintIdx].first.c_str(),
 		Vector2(leftPaintStartPosX, DRAW_START_Y),
 		Color::Green
 	);
 
 	// right paint
-	Renderer::Get().SubmitMultiLine(
+	Renderer::Get().Submit(
 		paints[currentPaintIdx].second.c_str(),
 		Vector2(rightPaintStartPosX, DRAW_START_Y),
 		Color::Green

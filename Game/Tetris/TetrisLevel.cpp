@@ -19,6 +19,8 @@ const int MESSAGE_UI_OFFSET_X = 3;
 const float MOVE_INTERVAL = 0.05f;
 const float LOCK_DELAY_INTERVAL = 0.5f;
 
+using namespace MinigameEngine;
+
 TetrisLevel::TetrisLevel() : player(nullptr), board(nullptr), curState(nullptr) {}
 
 TetrisLevel::~TetrisLevel()

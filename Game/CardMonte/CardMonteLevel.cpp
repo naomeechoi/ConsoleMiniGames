@@ -1,4 +1,3 @@
-#define NOMINMAX
 #include "CardMonteLevel.h"
 #include "CardMonteMode.h"
 #include "Render/Renderer.h"
@@ -21,8 +20,6 @@ const int UI_BOTTOM_OFFSET_Y = 3;
 const float BLANK_TIME = 4.0f;
 const int BLANK_COUNT = 20;
 const int MESSAGE_UI_OFFSET_X = 5;
-
-using namespace MinigameEngine;
 
 CardMonteLevel::CardMonteLevel()
 {
@@ -137,7 +134,7 @@ void CardMonteLevel::Draw()
                 bgColor = Color::Red;
         }*/
 
-        Renderer::Get().SubmitMultiLine(
+        Renderer::Get().Submit(
             cardSprite.c_str(),
             cards[i].pos,
             color,

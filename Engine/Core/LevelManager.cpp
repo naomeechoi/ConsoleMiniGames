@@ -55,14 +55,6 @@ namespace MinigameEngine
 		current->Draw();
 	}
 
-	void LevelManager::ProcessAddAndDestroyActorsOnLevel()
-	{
-		if (!current)
-			return;
-
-		current->ProcessAddAndDestroyActors();
-	}
-
 	void LevelManager::ChangeLevel()
 	{
 		if (!current)

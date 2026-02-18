@@ -1,14 +1,12 @@
 #pragma once
-#include <string>
 #include "Math/Vector2.h"
 #include "System/Timer.h"
-
-using namespace MinigameEngine;
+#include <string>
 
 class UILoadingBar
 {
 public:
-	UILoadingBar(Vector2 position, float maxWidth, float totalTime, char shapeChar);
+	UILoadingBar(MinigameEngine::Vector2 position, float maxWidth, float totalTime, char shapeChar);
 	void Tick(float deltaTime);
 	void Draw();
 
@@ -17,9 +15,9 @@ public:
 	void Clear();
 
 private:
-	Timer timer;
+	MinigameEngine::Timer timer;
 
-	Vector2 position;
+	MinigameEngine::Vector2 position;
 	float maxWidth;
 
 	std::string loadingBarStr;

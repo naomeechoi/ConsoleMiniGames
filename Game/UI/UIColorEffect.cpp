@@ -1,6 +1,7 @@
 #include "UIColorEffect.h"
 #include "Util/Color.h"
-#include "System/Timer.h"
+
+using namespace MinigameEngine;
 
 UIColorEffect::UIColorEffect(Color& controlledColor, Color effectColor, float totalTime, int blankCount)
 	: controlledColor(controlledColor), originColor(controlledColor), effectColor(effectColor), totalTime(totalTime), blackCount(blankCount)

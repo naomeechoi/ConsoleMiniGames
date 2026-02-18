@@ -69,13 +69,13 @@
     <ClCompile Include="Tetris\TetrisBoard.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Tetris\TetrisBlocks.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Tetris\TetrisRotationSystem.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Tetris\TetrisAIMachine.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Tetris\TetrisBlocks.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

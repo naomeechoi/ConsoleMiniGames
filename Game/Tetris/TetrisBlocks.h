@@ -26,16 +26,20 @@ struct SBlockInfo
 };
 
 extern const SBlockInfo BLOCK_INFO[BLOCKS_TYPE_SIZE];
-extern const char* SMALL_BLOCK_STR;
-extern const int SMALL_BLOCK_SIZE_X;
-extern const int SMALL_BLOCK_SIZE_Y;
 
-extern const char* BLOCK_STR;
-extern const int BLOCK_SIZE_X;
-extern const int BLOCK_SIZE_Y;
+constexpr const char* BLOCK_STR = "[][]\n[][]\0";
+constexpr int BLOCK_SIZE_X = 4;
+constexpr int BLOCK_SIZE_Y = 2;
 
-extern const int SMALL_BOARD_EDGE_SIZE_X;
-extern const int SMALL_BOARD_EDGE_SIZE_Y;
-extern const int SMALL_BOARD_DRAW_PADDING_X;
-extern const int SMALL_BOARD_DRAW_GAP_Y;
-extern const int LAST_SMALL_BOARD_PADDING_Y;
+constexpr const char* SMALL_BLOCK_STR = "[]\0";
+constexpr int SMALL_BLOCK_SIZE_X = 2;
+constexpr int SMALL_BLOCK_SIZE_Y = 1;
+
+constexpr int SMALL_BOARD_EDGE_SIZE_X = 12;
+constexpr int SMALL_BOARD_EDGE_SIZE_Y = 6;
+constexpr int SMALL_BOARD_DRAW_PADDING_X = 42;
+constexpr int SMALL_BOARD_DRAW_GAP_Y = 9;
+constexpr int LAST_SMALL_BOARD_PADDING_Y = 34;
+
+constexpr int BOARD_WIDTH = 10;
+constexpr int BOARD_HEIGHT = 20;

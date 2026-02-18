@@ -2,9 +2,6 @@
 #include "ScreenBuffer.h"
 #include "Util/Console.h"
 #include "Util/Delete.h"
-#include <sstream>   // std::istringstream
-#include <string>  
-#include <vector>
 
 namespace MinigameEngine
 {
@@ -86,93 +83,64 @@ namespace MinigameEngine
 
 	void Renderer::Draw()
 	{
-		// 화면 지우기
 		Clear();
 
-		// 전제조건: 레벨의 모든 액터가 렌더러에 Submit을 완료
-		// 렌더큐 순회하면서 프레임 채우기
+		const int width = screenSize.x;
+
 		for (const RenderCommand& command : renderQueue)
 		{
 			const int length = static_cast<int>(command.text.size());
 			if (length <= 0)
 				continue;
 
-			if (command.position.y < 0 || command.position.y > screenSize.y)
+			const int y = command.position.y;
+			if (y < 0 || y >= screenSize.y)
 				continue;
 
 			const int startX = command.position.x;
-			const int endX = command.position.x + length - 1;
+			const int endX = startX + length - 1;
 
-			if (endX < 0 || startX >= screenSize.x)
-			{
+			if (endX < 0 || startX >= width)
 				continue;
-			}
 
-			// 시작 위치
 			const int visibleStart = startX < 0 ? 0 : startX;
-			const int visibleEnd = endX >= screenSize.x ? screenSize.x - 1 : endX;
+			const int visibleEnd = endX >= width ? width - 1 : endX;
 
-			for (int x = visibleStart; x <= visibleEnd; x++)
+			const int rowStart = y * width;
+
+			WORD attr =
+				(static_cast<WORD>(command.color) & 0x0F) |
+				(static_cast<WORD>(command.bgColor) << 4);
+
+			const char* src = command.text.data() + (visibleStart - startX);
+
+			CHAR_INFO* dstChar =
+				&frame->charInfoArray[rowStart + visibleStart];
+
+			int* dstSort =
+				&frame->sortingOrderArray[rowStart + visibleStart];
+
+			for (int x = visibleStart; x <= visibleEnd; ++x)
 			{
-				// 문자열 안에 문자 인덱스
-				const int sourceIndex = x - startX;
+				if (*dstSort <= command.sortingOrder)
+				{
+					dstChar->Char.AsciiChar = *src;
+					dstChar->Attributes = attr;
+					*dstSort = command.sortingOrder;
+				}
 
-				// 프레임에서 인덱스
-				const int index = (command.position.y * screenSize.x) + x;
-
-				if (frame->sortingOrderArray[index] > command.sortingOrder)
-					continue;
-
-				WORD color = (WORD)command.color;
-				WORD bg = (WORD)command.bgColor;
-
-				frame->charInfoArray[index].Char.AsciiChar = command.text[sourceIndex];
-				frame->charInfoArray[index].Attributes = (color & 0x0F) | (bg << 4);
-				frame->sortingOrderArray[index] = command.sortingOrder;
+				src++;
+				dstChar++;
+				dstSort++;
 			}
 		}
 
-		// 그리기
 		GetCurScreenBuffer()->Draw(frame->charInfoArray);
-
-		// 버퍼 교환
 		Present();
-
-		// 렌더큐 비우기
 		renderQueue.clear();
 	}
 
 	void Renderer::Submit(
-		const char* text,
-		const Vector2& position,
-		Color color,
-		int sortingOrder)
-	{
-		RenderCommand command = {};
-		command.text = text;
-		command.position = position;
-		command.color = color;
-		command.sortingOrder = sortingOrder;
-		renderQueue.emplace_back(command);
-	}
-
-	void Renderer::Submit(
-		const char* text,
-		const Vector2& position,
-		Color color,
-		Color bgColor,
-		int sortingOrder)
-	{
-		RenderCommand command = {};
-		command.text = text;
-		command.position = position;
-		command.color = color;
-		command.bgColor = bgColor;
-		command.sortingOrder = sortingOrder;
-		renderQueue.emplace_back(command);
-	}
-
-	void Renderer::SubmitMultiLine(
 		const char* text,
 		const Vector2& position,
 		Color color,
@@ -182,15 +150,37 @@ namespace MinigameEngine
 		if (!text)
 			return;
 
-		std::istringstream iss(text);
-		std::string line;
 		int y = position.y;
+		const char* lineStart = text;
+		const char* ptr = text;
 
-		while (std::getline(iss, line))
+		while (*ptr)
 		{
-			// 빈 줄도 렌더링 가능하도록 line.c_str() 그대로 전달
-			Submit(line.c_str(), { position.x, y }, color, bgColor, sortingOrder);
-			y++;
+			if (*ptr == '\n')
+			{
+				renderQueue.emplace_back(RenderCommand{
+					std::string(lineStart, ptr - lineStart),
+					{ position.x, y },
+					color,
+					bgColor,
+					sortingOrder
+					});
+
+				y++;
+				lineStart = ptr + 1;
+			}
+			++ptr;
+		}
+
+		if (ptr != lineStart)
+		{
+			renderQueue.emplace_back(RenderCommand{
+				std::string(lineStart, ptr - lineStart),
+				{ position.x, y },
+				color,
+				bgColor,
+				sortingOrder
+				});
 		}
 	}
 

@@ -1,12 +1,10 @@
-#include "Util/Color.h"
 #include "System/Timer.h"
-
-using namespace MinigameEngine;
+#include "Util/Color.h"
 
 class UIColorEffect
 {
 public:
-	UIColorEffect(Color& controlledColor, Color effectColor, float totalTime, int blankCount);
+	UIColorEffect(MinigameEngine::Color& controlledColor, MinigameEngine::Color effectColor, float totalTime, int blankCount);
 	void Tick(float deltaTime);
 	void Start();
 	void Stop();
@@ -15,15 +13,15 @@ private:
 	void Reset();
 
 private:
-	Timer totalTimer;
-	Timer blankTimer;
+	MinigameEngine::Timer totalTimer;
+	MinigameEngine::Timer blankTimer;
 
 	float totalTime = 0.0f;
 	int blackCount = 0;
 
-	Color& controlledColor;
-	Color originColor = Color::Green;
-	Color effectColor = Color::LightRed;
+	MinigameEngine::Color& controlledColor;
+	MinigameEngine::Color originColor = MinigameEngine::Color::Green;
+	MinigameEngine::Color effectColor = MinigameEngine::Color::LightRed;
 
 	bool isStarted = false;
 };

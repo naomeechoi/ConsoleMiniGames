@@ -19,7 +19,7 @@ void UITop::Tick(float deltaTime, Input* input)
 
 void UITop::Draw()
 {
-	Renderer::Get().SubmitMultiLine(
+	Renderer::Get().Submit(
 		resultStr.c_str(),
 		position,
 		Color::White

@@ -4,6 +4,8 @@
 #include "UIColorEffect.h"
 #include <algorithm>
 
+using namespace MinigameEngine;
+
 UILoadingBar::UILoadingBar(Vector2 position, float maxWidth, float totalTime, char shapeChar)
 	:position(position), maxWidth(maxWidth), totalTime(totalTime), shapeChar(shapeChar)
 {
@@ -40,7 +42,7 @@ void UILoadingBar::Tick(float deltaTime)
 
 void UILoadingBar::Draw()
 {
-	Renderer::Get().SubmitMultiLine(
+	Renderer::Get().Submit(
 		loadingBarStr.c_str(),
 		position,
 		Color::White

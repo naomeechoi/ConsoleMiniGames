@@ -3,8 +3,8 @@
 #include "Util/Color.h"
 #include <Windows.h>
 #include <vector>
-#include <string>
 #include <unordered_set>
+#include <string>
 
 namespace MinigameEngine
 {
@@ -35,9 +35,7 @@ namespace MinigameEngine
 		Renderer(const Vector2& screenSize);
 		~Renderer();
 		void Draw();
-		void Submit(const char* text, const Vector2& position, Color color = Color::White, int sortingOrder = 0);
-		void Submit(const char* text, const Vector2& position, Color color = Color::White, Color bgColor = Color::Black, int sortingOrder = 0);
-		void SubmitMultiLine(const char* text, const Vector2& position, Color color = Color::White, Color bg = Color::Black, int sortingOrder = 0);
+		void Submit(const char* text, const Vector2& position, Color color = Color::White, Color bg = Color::Black, int sortingOrder = 0);
 		static Renderer& Get();
 
 	private:

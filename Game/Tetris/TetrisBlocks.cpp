@@ -80,19 +80,4 @@ const SBlockInfo BLOCK_INFO[BLOCKS_TYPE_SIZE] =
 		},
 		Color::Red,
 	}
-
 };
-
-const char* BLOCK_STR = "[][]\n[][]\0";
-const int BLOCK_SIZE_X = 4;
-const int BLOCK_SIZE_Y = 2;
-
-const char* SMALL_BLOCK_STR = "[]\0";
-const int SMALL_BLOCK_SIZE_X = 2;
-const int SMALL_BLOCK_SIZE_Y = 1;
-
-const int SMALL_BOARD_EDGE_SIZE_X = 12;
-const int SMALL_BOARD_EDGE_SIZE_Y = 6;
-const int SMALL_BOARD_DRAW_PADDING_X = 42;
-const int SMALL_BOARD_DRAW_GAP_Y = 9;
-const int LAST_SMALL_BOARD_PADDING_Y = 34;

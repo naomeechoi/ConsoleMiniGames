@@ -4,7 +4,6 @@
 #include "Util/Color.h"
 #include "Common/GameCommon.h"
 #include "System/Input.h"
-#include "World/Actor.h"
 #include "Render/Renderer.h"
 
 #include <iostream>
@@ -101,7 +100,7 @@ void StartLevel::DrawStarStr()
 		{
 			color = Color::Cyan;
 		}
-		Renderer::Get().SubmitMultiLine(
+		Renderer::Get().Submit(
 			mainStrLines[i].first.c_str(),
 			Vector2(startX, startY),
 			color

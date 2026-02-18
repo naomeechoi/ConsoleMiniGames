@@ -57,13 +57,13 @@ void GameResultLevel::DrawResultStr()
 	Renderer::Get().Submit(
 		mainText.c_str(),
 		Vector2(startX, startY),
-		Color::White, 0);
+		Color::White);
 
 	startX = (displaySize.x - (int)subText.size()) / 2;
 	Renderer::Get().Submit(
 		subText.c_str(),
 		Vector2(startX, startY + 2),
-		Color::Green, 0);
+		Color::Green);
 
 	Console::SetConsoleTextColor(Color::White);
 }

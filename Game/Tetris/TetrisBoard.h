@@ -1,24 +1,19 @@
 #pragma once
-#include "TetrisBlocks.h"
-#include "Math/Vector2.h"
-#include <string>
-#include <vector>
-#include <array>
 #include <optional>
+#include "Math/Vector2.h"
 
-constexpr int BOARD_WIDTH = 10;
-constexpr int BOARD_HEIGHT = 20;
+enum class EBlockType;
 
 class TetrisBoard
 {
-    struct SCell
-    {
-        EBlockType type = EBlockType::EMPTY;
-        float flashFrame = 0.0f;
-	};
-
 public:
     TetrisBoard(MinigameEngine::Vector2 worldPos);
+    ~TetrisBoard();
+
+    TetrisBoard(const TetrisBoard& other) = delete;
+    TetrisBoard& operator=(const TetrisBoard& other) = delete;
+    TetrisBoard(TetrisBoard&& other) = delete;
+    TetrisBoard& operator=(TetrisBoard&& other) = delete;
 
     void Draw();
     void Tick(float deltaTime);
@@ -35,20 +30,6 @@ public:
     bool GetSpawnPos(EBlockType type, int& x, int& y, int& rot);
 
 private:
-    void LoadBoardsEdgeTxt();
-    bool IsAboveBottom(int y) const;
-    bool CheckXBoundary(int x) const;
-    bool CheckOutOfBoundary(int x, int y);
-    bool IsOccupied(int x, int y);
-
-private:
-    std::array<std::array<SCell, BOARD_WIDTH>, BOARD_HEIGHT> grid;
-    MinigameEngine::Vector2 worldPos;
-    std::string boardEdge;
-    std::string oneBrickEdge;
-    float lineFlashTimers[BOARD_HEIGHT] = { 0 };
-
-    bool isClearing = false;
-    std::vector<int> clearingLines;
-    std::optional<int> cleanCount;
+    class Impl;
+    Impl* impl;
 };

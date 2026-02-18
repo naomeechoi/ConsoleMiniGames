@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
-#include <string>
 #include "Math/Vector2.h"
 #include "Util/Color.h"
 
@@ -33,7 +32,6 @@ namespace MinigameEngine
 		void BeginPlay();
 		void Tick(float deltaTime, Input* input);
 		void Draw();
-		void ProcessAddAndDestroyActorsOnLevel();
 		void ChangeLevel();
 		Color GetLevelEdgeColor();
 

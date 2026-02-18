@@ -52,7 +52,7 @@ void MenuLevel::DrawMenuStr()
 		const std::string& menuText = menu[i].second;
 		int startX = (displaySize.x - (int)menuText.size()) / 2;
 	
-		Renderer::Get().SubmitMultiLine(
+		Renderer::Get().Submit(
 			menuText.c_str(),
 			Vector2(startX, startY),
 			(i == curIdx ? selectedColor : color)

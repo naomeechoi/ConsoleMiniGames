@@ -1,4 +1,3 @@
-#define NOMINMAX
 #include "TetrisPlayer.h"
 #include "TetrisBoard.h"
 #include "System/Input.h"
@@ -49,7 +48,7 @@ void TetrisPlayer::Draw()
         Vector2 pos;
         pos.x = worldStartPos.x + (offsetX + block.shapes[rotation][i].x) * BLOCK_SIZE_X;
         pos.y = worldStartPos.y + (offsetY + block.shapes[rotation][i].y) * BLOCK_SIZE_Y;
-        Renderer::Get().SubmitMultiLine(
+        Renderer::Get().Submit(
             BLOCK_STR,
             pos,
             block.color,
@@ -99,7 +98,7 @@ void TetrisPlayer::DrawMiniBlock(EBlockType type, int boardX, int boardY)
         pos.y = boardY + centerYOffset +
             (block.shapes[0][j].y - minY) * SMALL_BLOCK_SIZE_Y;
 
-        Renderer::Get().SubmitMultiLine(
+        Renderer::Get().Submit(
             SMALL_BLOCK_STR,
             pos,
             block.color,
@@ -125,7 +124,7 @@ void TetrisPlayer::DrawGhost(int ghostOffsetY)
         pos.y = worldStartPos.y +
             (ghostOffsetY + block.shapes[rotation][i].y) * BLOCK_SIZE_Y;
 
-        Renderer::Get().SubmitMultiLine(
+        Renderer::Get().Submit(
             BLOCK_STR,
             pos,
             Color::Gray,

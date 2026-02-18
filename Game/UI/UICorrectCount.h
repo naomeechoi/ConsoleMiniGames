@@ -2,8 +2,6 @@
 #include <string>
 #include "Math/Vector2.h"
 
-using namespace MinigameEngine;
-
 class UICorrectCount
 {
 public:
@@ -16,7 +14,7 @@ public:
 
 private:
 	int yPos = 0;
-	Vector2 position;
+	MinigameEngine::Vector2 position;
 	int maxCount = 20;
 	int curCount = 0;
 	int limitX = 0;

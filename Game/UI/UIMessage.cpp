@@ -1,7 +1,7 @@
-#define NOMINMAX
 #include "UIMessage.h"
 #include "Render/Renderer.h"
 
+using namespace MinigameEngine;
 
 UIMessage::UIMessage()
 {
@@ -9,7 +9,7 @@ UIMessage::UIMessage()
 
 void UIMessage::Draw()
 {
-    Renderer::Get().SubmitMultiLine(
+    Renderer::Get().Submit(
         message.c_str(),
         pos,
         Color::White,

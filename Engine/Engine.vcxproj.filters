@@ -21,9 +21,6 @@
     <ClCompile Include="Core\LevelManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="World\Actor.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Engine.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -37,9 +34,6 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Util\Console.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Util\LayoutCalculator.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Render\Renderer.cpp">
@@ -59,16 +53,10 @@
     <ClInclude Include="Common\Common.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Common\RTTI.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Math\Vector2.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Core\LevelManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Actor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Core\Engine.h">
@@ -87,9 +75,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Util\Console.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Util\LayoutCalculator.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Render\Renderer.h">

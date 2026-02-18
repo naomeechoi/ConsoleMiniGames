@@ -1,7 +1,10 @@
 #include "UICorrectCount.h"
 #include "Render/Renderer.h"
+#include "Math/Vector2.h"
 
 const int PADDING = 3;
+
+using namespace MinigameEngine;
 
 UICorrectCount::UICorrectCount()
 {
@@ -41,7 +44,7 @@ void UICorrectCount::Clear()
 
 void UICorrectCount::Draw()
 {
-	Renderer::Get().SubmitMultiLine(
+	Renderer::Get().Submit(
 		correctCountStr.c_str(),
 		position,
 		Color::White

@@ -9,7 +9,6 @@
 namespace MinigameEngine
 {
 	class LevelManger;
-	class LayoutCalculator;
 	class Renderer;
 
 	class NAOMI_API Engine
@@ -47,15 +46,10 @@ namespace MinigameEngine
 		void BeginPlay();
 		void Tick(float deltaTime);
 		void Draw();
-		void ProcessActorsOnLevel();
 		void ChangeLevel();
 
 	private:
-		void LoadEdgeTxt();
 		void DrawEdge();
-
-	public:
-		LayoutCalculator* layoutCalculator;
 	};
 }
 
